@@ -1,0 +1,94 @@
+# Copy to terraform.tfvars (or use -var-file) and fill in. Do not commit secrets.
+#
+# Sensitive values (RHSM): for Terraform CLI, copy secrets.auto.tfvars.example →
+# secrets.auto.tfvars (Terraform loads *.auto.tfvars). For OCI Resource Manager,
+# set **RHSM organization ID** and **RHSM activation key** in the stack variables UI
+# (same Terraform variables: rhsm_org_id, rhsm_activation_key).
+
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+region           = "us-phoenix-1"
+compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+# Optional: tenancy home region when it differs from `region` (IAM / cross-region cases).
+# identity_home_region = "us-phoenix-1"
+
+ssh_public_key = "ssh-ed25519 AAAA...your-key... comment"
+
+# Naming (modules/kove-context) — display prefix = kove_environment-kove_stack_name with namespace
+kove_namespace   = "kove"
+kove_environment = "dev"
+kove_stack_name  = "rdma"
+
+tags = {
+  project = "rdma-platform"
+}
+
+# New VCN (default): 10.0.1.0/24 public, 10.0.2.0/24 mgmt, 10.0.3.0/24 RDMA
+# use_existing_vcn = false
+# When creating the VCN (oracle-quickstart/oci-hpc style: NAT + service gateway, DHCP VcnLocalPlusInternet):
+# ssh_ingress_cidr = "203.0.113.0/24"
+# public_ingress_hpc_ui_ports = false
+
+# Or use three existing subnets (+ VCN OCID):
+# use_existing_vcn              = true
+# existing_vcn_id               = "ocid1.vcn.oc1..aaaa"
+# existing_public_subnet_id     = "ocid1.subnet.oc1..aaaa"
+# existing_management_subnet_id = "ocid1.subnet.oc1..aaaa"
+# existing_rdma_subnet_id       = "ocid1.subnet.oc1..aaaa"
+
+# Pin AD if needed (otherwise derived from RDMA subnet, then mgmt, then public, then first tenancy AD):
+# availability_domain = "pILZ:PHX-AD-2"
+
+# Bare metal custom image (control + all memory nodes)
+bm_node_image_ocid = "ocid1.image.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+# Scale memory nodes (control is always 1). Default 2 → 3 BM instances total.
+memory_node_count = 2
+
+# Bare metal plane (matches Resource Manager group "Bare metal (RDMA plane)")
+# bm_node_shape                  = "BM.Optimized3.36"
+# bm_boot_volume_size_gbs        = 120
+# bm_generic_platform_config     = false
+# bm_smt_enabled                 = true
+# bm_numa_nodes_per_socket       = "NPS1"
+# use_compute_agent              = false
+# bm_imds_ssh_key_bootstrap      = true
+# bm_capacity_reservation_id     = ""
+# cluster_network_create_timeout = "2h"
+
+# OCI Cluster Placement Group for BM rack-aware placement (creates before instances via implicit dependency)
+# cluster_placement_group_enabled     = true
+# cluster_placement_group_type        = "STANDARD"
+# cluster_placement_group_name        = ""
+# cluster_placement_group_description = ""
+
+# Optional bastion / management shapes (defaults: VM.Standard.E6.Flex, 2 OCPU, 16 GB)
+# enable_bastion = true
+# bastion_shape          = "VM.Standard.E6.Flex"
+# bastion_ocpus          = 2
+# bastion_memory_gbs     = 16
+# bastion_image_ocid     = ""
+# management_shape       = "VM.Standard.E6.Flex"
+# management_ocpus       = 2
+# management_memory_gbs    = 16
+# management_image_ocid  = ""
+
+# RHSM for cloud-init (prefer secrets.auto.tfvars for CLI). Resource Manager: use stack variables.
+# rhsm_org_id           = "your-rhsm-org-id"
+# rhsm_activation_key   = "your-activation-key"
+# playbooks_zip_url     = "https://objectstorage.region.oraclecloud.com/.../playbooks.zip"
+
+# Serial console over SSH tunnel (optional)
+# create_bm_console_connections = false
+
+# Memory autoscale on management VM (apply Resource Manager jobs). Apply IAM from rdma-autoscale first.
+# enable_memory_autoscale                 = true
+# resource_manager_stack_id               = "ocid1.ormstack.oc1..aaaa"
+# resource_manager_stack_compartment_ocid = "ocid1.compartment.oc1..aaaa"
+# resource_manager_region                 = "us-phoenix-1"
+# memory_scale_threshold_percent          = 80
+# memory_scale_window_minutes             = 5
+# memory_scale_cooldown_minutes           = 20
+# memory_node_max_count                   = 8
+# memory_autoscale_check_interval_minutes = 5
+# memory_autoscale_dry_run                = false

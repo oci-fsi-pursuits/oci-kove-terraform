@@ -1,0 +1,5 @@
+namespace   = "kove"
+environment = "dev"
+stack_name  = "demo"
+
+# additional_tags = { owner = "platform" }

@@ -1,0 +1,459 @@
+title: "Kove RDMA Platform"
+description: "Bare metal RDMA stack: optional bastion, management VM, VCN or existing subnets, optional memory-node autoscale via Resource Manager."
+schemaVersion: 1.1.0
+version: "20190304"
+locale: "en"
+
+variableGroups:
+  - title: "Hidden (ORM-injected)"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+
+  - title: "Target"
+    variables:
+      - compartment_ocid
+      - ssh_public_key
+      - bm_node_image_ocid
+
+  - title: "Topology"
+    variables:
+      - kove_namespace
+      - kove_environment
+      - kove_stack_name
+      - host_label_prefix
+      - availability_domain
+      - memory_node_count
+      - enable_bastion
+      - create_bm_console_connections
+
+  - title: "Networking"
+    variables:
+      - use_existing_vcn
+      - vcn_cidr_block
+      - existing_vcn_id
+      - existing_public_subnet_id
+      - existing_management_subnet_id
+      - existing_rdma_subnet_id
+      - ssh_ingress_cidr
+      - public_ingress_hpc_ui_ports
+      - private_subnet_ssh_sources_extras
+
+  - title: "RHSM / management cloud-init"
+    variables:
+      - rhsm_org_id
+      - rhsm_activation_key
+      - playbooks_zip_url
+      - management_cloud_init_template_path
+
+  - title: "Bastion VM"
+    variables:
+      - bastion_shape
+      - bastion_ocpus
+      - bastion_memory_gbs
+      - bastion_image_ocid
+
+  - title: "Management VM"
+    variables:
+      - management_shape
+      - management_ocpus
+      - management_memory_gbs
+      - management_image_ocid
+
+  - title: "Bare metal (RDMA plane)"
+    variables:
+      - bm_node_shape
+      - bm_boot_volume_size_gbs
+      - bm_generic_platform_config
+      - bm_smt_enabled
+      - bm_numa_nodes_per_socket
+      - use_compute_agent
+      - bm_imds_ssh_key_bootstrap
+      - bm_capacity_reservation_id
+      - cluster_network_create_timeout
+
+  - title: "Memory autoscale (Resource Manager apply jobs)"
+    variables:
+      - enable_memory_autoscale
+      - resource_manager_stack_id
+      - resource_manager_stack_compartment_ocid
+      - resource_manager_region
+      - memory_scale_threshold_percent
+      - memory_scale_window_minutes
+      - memory_scale_cooldown_minutes
+      - memory_node_max_count
+      - memory_autoscale_check_interval_minutes
+      - memory_autoscale_dry_run
+
+  - title: "Advanced"
+    variables:
+      - identity_home_region
+
+variables:
+  tenancy_ocid:
+    type: string
+    title: "Tenancy OCID"
+    description: "Set automatically when you create the stack in Resource Manager."
+    required: true
+    visible: false
+
+  region:
+    type: string
+    title: "Region"
+    description: "Set automatically when you create the stack in Resource Manager (e.g. us-phoenix-1)."
+    required: true
+    visible: false
+
+  identity_home_region:
+    type: string
+    title: "Identity home region"
+    description: "Home region for IAM API calls when it differs from region (e.g. us-phoenix-1)."
+    required: false
+    default: "us-phoenix-1"
+
+  compartment_ocid:
+    type: string
+    title: "Compartment OCID"
+    description: "Compartment where resources are created."
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "SSH public key"
+    description: "Paste your public key (OpenSSH format). Injected on VMs and combined with generated keys on BMs."
+    required: true
+
+  bm_node_image_ocid:
+    type: string
+    title: "BM node image OCID"
+    description: "Custom image OCID for control and memory bare metal nodes."
+    required: true
+
+  kove_namespace:
+    type: string
+    title: "Namespace (naming)"
+    description: "Short prefix for tags and display names (e.g. kove)."
+    default: "kove"
+    required: false
+
+  kove_environment:
+    type: string
+    title: "Environment"
+    description: "e.g. dev, staging, prod — part of resource name prefix."
+    default: "dev"
+    required: false
+
+  kove_stack_name:
+    type: string
+    title: "Stack name"
+    description: "Logical stack id (e.g. rdma, rdma-ash). Combined as namespace-environment-stack_name."
+    default: "rdma"
+    required: false
+
+  host_label_prefix:
+    type: string
+    title: "Hostname label prefix (optional)"
+    default: ""
+    required: false
+
+  availability_domain:
+    type: string
+    title: "Availability domain (optional)"
+    description: "e.g. pILZ:PHX-AD-2. Leave empty to derive from subnets or tenancy."
+    required: false
+    default: ""
+
+  memory_node_count:
+    type: number
+    title: "Memory node count"
+    default: 2
+    required: false
+
+  enable_bastion:
+    type: boolean
+    title: "Create bastion"
+    default: true
+    required: false
+
+  use_existing_vcn:
+    type: boolean
+    title: "Use existing VCN/subnets"
+    description: "If true, provide existing VCN + 3 subnet OCIDs."
+    default: false
+    required: false
+
+  vcn_cidr_block:
+    type: string
+    title: "VCN CIDR (new VCN mode)"
+    description: "Used when creating a new VCN (1 public subnet + 2 private subnets)."
+    default: "10.0.0.0/16"
+    required: false
+    visible:
+      eq:
+        - use_existing_vcn
+        - false
+
+  existing_vcn_id:
+    type: string
+    title: "Existing VCN OCID"
+    required: false
+    default: ""
+    visible:
+      eq:
+        - use_existing_vcn
+        - true
+
+  existing_public_subnet_id:
+    type: string
+    title: "Existing public subnet OCID"
+    required: false
+    default: ""
+    visible:
+      eq:
+        - use_existing_vcn
+        - true
+
+  existing_management_subnet_id:
+    type: string
+    title: "Existing management subnet OCID"
+    required: false
+    default: ""
+    visible:
+      eq:
+        - use_existing_vcn
+        - true
+
+  existing_rdma_subnet_id:
+    type: string
+    title: "Existing RDMA subnet OCID"
+    required: false
+    default: ""
+    visible:
+      eq:
+        - use_existing_vcn
+        - true
+
+  ssh_ingress_cidr:
+    type: string
+    title: "SSH ingress CIDR (public subnet)"
+    default: "0.0.0.0/0"
+    required: false
+
+  public_ingress_hpc_ui_ports:
+    type: boolean
+    title: "Allow public UI ports 3000/5000"
+    default: true
+    required: false
+
+  private_subnet_ssh_sources_extras:
+    type: string
+    title: "Extra private subnet SSH CIDRs"
+    default: ""
+    required: false
+
+  enable_memory_autoscale:
+    type: boolean
+    title: "Enable management autoscale timer"
+    description: "Runs scale checks on the management VM and can submit Resource Manager apply jobs. Set stack OCIDs below after the first apply (or from the OCI console)."
+    default: false
+    required: false
+
+  resource_manager_stack_id:
+    type: string
+    title: "Resource Manager stack OCID (autoscale target)"
+    description: "The Terraform stack OCID this deployment should update when scaling memory nodes (usually this stack, from Stack details in Resource Manager)."
+    default: ""
+    required: false
+
+  resource_manager_stack_compartment_ocid:
+    type: string
+    title: "RM stack compartment OCID (optional)"
+    description: "Compartment OCID of the Resource Manager stack to update when autoscaling. Leave empty to use the deployment compartment."
+    default: ""
+    required: false
+
+  resource_manager_region:
+    type: string
+    title: "RM stack region (optional)"
+    description: "Region name for that stack (e.g. us-phoenix-1). Leave empty to use identity_home_region."
+    default: ""
+    required: false
+
+  memory_scale_threshold_percent:
+    type: number
+    title: "Scale threshold (%)"
+    default: 80
+    required: false
+
+  memory_scale_window_minutes:
+    type: number
+    title: "Scale window minutes"
+    default: 5
+    required: false
+
+  memory_scale_cooldown_minutes:
+    type: number
+    title: "Cooldown minutes"
+    default: 20
+    required: false
+
+  memory_node_max_count:
+    type: number
+    title: "Max memory nodes"
+    default: 8
+    required: false
+
+  memory_autoscale_check_interval_minutes:
+    type: number
+    title: "Autoscale check interval (minutes)"
+    default: 5
+    required: false
+
+  memory_autoscale_dry_run:
+    type: boolean
+    title: "Autoscale dry run"
+    description: "When true, the management script logs intent but does not submit Resource Manager jobs."
+    default: false
+    required: false
+
+  management_shape:
+    type: string
+    title: "Management shape"
+    default: "VM.Standard.E6.Flex"
+    required: false
+
+  management_ocpus:
+    type: number
+    title: "Management OCPUs"
+    default: 2
+    required: false
+
+  management_memory_gbs:
+    type: number
+    title: "Management memory (GB)"
+    default: 16
+    required: false
+
+  bastion_shape:
+    type: string
+    title: "Bastion shape"
+    default: "VM.Standard.E6.Flex"
+    required: false
+
+  bastion_ocpus:
+    type: number
+    title: "Bastion OCPUs"
+    default: 2
+    required: false
+
+  bastion_memory_gbs:
+    type: number
+    title: "Bastion memory (GB)"
+    default: 16
+    required: false
+
+  create_bm_console_connections:
+    type: boolean
+    title: "Enable BM console/VNC connections"
+    description: "Creates OCI instance console connections for each BM node. Network topology remains 1 public subnet + 2 private subnets in new VCN mode."
+    default: false
+    required: false
+
+  bm_node_shape:
+    type: string
+    title: "BM node shape"
+    default: "BM.Optimized3.36"
+    required: false
+
+  bm_boot_volume_size_gbs:
+    type: number
+    title: "BM boot volume size (GB)"
+    default: 120
+    required: false
+
+  bm_generic_platform_config:
+    type: boolean
+    title: "GENERIC_BM platform config"
+    default: false
+    required: false
+
+  bm_smt_enabled:
+    type: boolean
+    title: "Enable SMT"
+    default: true
+    required: false
+
+  bm_numa_nodes_per_socket:
+    type: string
+    title: "NUMA nodes per socket"
+    default: "NPS1"
+    required: false
+
+  management_image_ocid:
+    type: string
+    title: "Management image OCID"
+    description: "Optional custom image for the management VM. Empty selects latest Oracle Linux 8 for the shape."
+    default: ""
+    required: false
+
+  bastion_image_ocid:
+    type: string
+    title: "Bastion image OCID"
+    description: "Optional custom image for the bastion. Empty selects latest Oracle Linux 8 for the shape."
+    default: ""
+    required: false
+
+  management_cloud_init_template_path:
+    type: string
+    title: "Management cloud-init template path"
+    description: "Leave empty to use the built-in template. Set only if you upload a custom template into the stack zip and reference it relative to the stack root."
+    default: ""
+    required: false
+
+  rhsm_org_id:
+    type: string
+    title: "RHSM organization ID"
+    description: "Red Hat Subscription Manager organization ID for management/BM cloud-init (sensitive; stored in Terraform state)."
+    default: ""
+    required: false
+
+  rhsm_activation_key:
+    type: string
+    title: "RHSM activation key"
+    description: "Red Hat activation key (sensitive; stored in state). Paste in the console; treat like a password."
+    default: ""
+    required: false
+
+  playbooks_zip_url:
+    type: string
+    title: "Playbooks zip URL"
+    description: "Optional HTTPS URL for playbooks.zip downloaded during management VM bootstrap."
+    default: ""
+    required: false
+
+  use_compute_agent:
+    type: boolean
+    title: "Enable OCI compute agent RDMA plugins"
+    default: false
+    required: false
+
+  bm_imds_ssh_key_bootstrap:
+    type: boolean
+    title: "BM IMDS SSH key bootstrap"
+    description: "First-boot script copies SSH keys from instance metadata to opc (useful for custom images)."
+    default: true
+    required: false
+
+  bm_capacity_reservation_id:
+    type: string
+    title: "BM capacity reservation OCID (optional)"
+    default: ""
+    required: false
+
+  cluster_network_create_timeout:
+    type: string
+    title: "BM cluster network create timeout"
+    description: "Terraform create timeout for BM instances (e.g. 2h). Empty uses provider default."
+    default: ""
+    required: false
