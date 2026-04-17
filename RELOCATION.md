@@ -7,4 +7,4 @@
 4. Update **CI** (GitHub Actions, ORM zip jobs) to clone or checkout this repo instead of a subfolder of `kove-oci-build-2`.
 5. Tag releases (`v0.1.0`) when modules stabilize; pin examples and downstream stacks to tags.
 
-Relative paths inside **this** repo (`examples/minimal` → `../../modules/kove-context`) stay valid as long as the folder layout is unchanged.
+Relative paths inside **this** repo (`examples/minimal` → `../../modules/labels`) stay valid as long as the folder layout is unchanged.

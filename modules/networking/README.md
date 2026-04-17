@@ -1,4 +1,4 @@
-# kove-oci-network-rdma-vcn
+# networking
 
 Creates a dedicated VCN with:
 

@@ -1,130 +1,109 @@
 output "vcn_id" {
-  description = "VCN OCID (created or existing)."
-  value       = local.vcn_id
+  value = module.rdma_platform.vcn_id
 }
 
 output "public_subnet_ocid" {
-  description = "Public subnet (bastion)."
-  value       = local.public_subnet_id
+  value = module.rdma_platform.public_subnet_ocid
 }
 
 output "management_subnet_ocid" {
-  description = "Private management subnet."
-  value       = local.management_subnet_id
+  value = module.rdma_platform.management_subnet_ocid
 }
 
 output "rdma_subnet_ocid" {
-  description = "Private RDMA / BM primary VNIC subnet."
-  value       = local.rdma_subnet_id
+  value = module.rdma_platform.rdma_subnet_ocid
 }
 
 output "public_route_table_ocid" {
-  description = "Public route table when Terraform created the VCN (for attaching OKE API/LB subnets). Empty when use_existing_vcn is true."
-  value       = var.use_existing_vcn ? "" : module.network_rdma_vcn[0].public_route_table_id
+  value = module.rdma_platform.public_route_table_ocid
 }
 
 output "private_route_table_ocid" {
-  description = "Private (NAT) route table when Terraform created the VCN (for OKE worker subnet). Empty when use_existing_vcn is true."
-  value       = var.use_existing_vcn ? "" : module.network_rdma_vcn[0].private_route_table_id
+  value = module.rdma_platform.private_route_table_ocid
 }
 
 output "bastion_public_ip" {
-  description = "Public IP when enable_bastion is true; null otherwise."
-  value       = var.enable_bastion ? oci_core_instance.bastion[0].public_ip : null
+  value = module.rdma_platform.bastion_public_ip
 }
 
 output "management_private_ip" {
-  description = "Private IP of the management VM."
-  value       = oci_core_instance.management.private_ip
+  value = module.rdma_platform.management_private_ip
+}
+
+output "management_secondary_vnic_id" {
+  value = module.rdma_platform.management_secondary_vnic_id
 }
 
 output "compute_cluster_id" {
-  description = "BM compute cluster OCID."
-  value       = oci_core_compute_cluster.bm_compute.id
+  value = module.rdma_platform.compute_cluster_id
+}
+
+output "cluster_network_id" {
+  value = module.rdma_platform.cluster_network_id
 }
 
 output "cluster_placement_group_id" {
-  description = "Cluster Placement Group OCID when cluster_placement_group_enabled is true; null otherwise."
-  value       = length(oci_cluster_placement_groups_cluster_placement_group.bm_rdma) > 0 ? oci_cluster_placement_groups_cluster_placement_group.bm_rdma[0].id : null
+  value = module.rdma_platform.cluster_placement_group_id
 }
 
 output "bm_instance_ids" {
-  description = "BM OCIDs in order: index 0 = control, remaining = memory nodes."
-  value       = oci_core_instance.bm_nodes[*].id
+  value = module.rdma_platform.bm_instance_ids
 }
 
 output "bm_private_ips" {
-  description = "Private IPs aligned with bm_instance_ids."
-  value       = oci_core_instance.bm_nodes[*].private_ip
+  value = module.rdma_platform.bm_private_ips
 }
 
 output "bm_control_private_ip" {
-  description = "Private IP of the single BM control node (index 0)."
-  value       = oci_core_instance.bm_nodes[0].private_ip
+  value = module.rdma_platform.bm_control_private_ip
 }
 
 output "bm_memory_private_ips" {
-  description = "Private IPs of memory nodes only (excludes control)."
-  value       = slice(oci_core_instance.bm_nodes[*].private_ip, 1, length(oci_core_instance.bm_nodes))
+  value = module.rdma_platform.bm_memory_private_ips
+}
+
+output "cluster_network_instance_ids" {
+  value = module.rdma_platform.cluster_network_instance_ids
+}
+
+output "cluster_network_instance_private_ips" {
+  value = module.rdma_platform.cluster_network_instance_private_ips
 }
 
 output "cluster_ssh_private_key_openssh" {
-  description = "Terraform-generated ED25519 private key (paired with metadata on instances). Use if your primary key is rejected by sshd."
-  value       = tls_private_key.cluster_ssh.private_key_openssh
-  sensitive   = true
+  value     = module.rdma_platform.cluster_ssh_private_key_openssh
+  sensitive = true
 }
 
 output "cluster_ssh_public_key_openssh" {
-  description = "Terraform-generated ED25519 public key."
-  value       = tls_private_key.cluster_ssh.public_key_openssh
+  value = module.rdma_platform.cluster_ssh_public_key_openssh
 }
 
 output "bm_console_vnc_connection_strings" {
-  description = "Console VNC connection strings when create_bm_console_connections is true; same order as bm_instance_ids."
-  value       = var.create_bm_console_connections ? oci_core_instance_console_connection.bm_console[*].vnc_connection_string : []
-  sensitive   = true
+  value     = module.rdma_platform.bm_console_vnc_connection_strings
+  sensitive = true
 }
 
 output "oke_prerequisites" {
-  description = "Subnet, route tables, and compartment references for stig-hardened-builds/oke-cluster with use_existing_vcn (when this stack created the VCN)."
-  value = {
-    compartment_ocid         = var.compartment_ocid
-    tenancy_ocid             = var.tenancy_ocid
-    region                   = var.region
-    vcn_id                   = local.vcn_id
-    public_subnet_ocid       = local.public_subnet_id
-    management_subnet_ocid   = local.management_subnet_id
-    rdma_subnet_ocid         = local.rdma_subnet_id
-    public_route_table_ocid  = var.use_existing_vcn ? "" : module.network_rdma_vcn[0].public_route_table_id
-    private_route_table_ocid = var.use_existing_vcn ? "" : module.network_rdma_vcn[0].private_route_table_id
-    nsg_ocids                = []
-  }
+  value = module.rdma_platform.oke_prerequisites
 }
 
 output "existing_vcns_in_compartment" {
-  description = "Existing VCNs in the compartment grouped by display_name (display_name -> list of OCIDs)."
-  value = {
-    for vcn in data.oci_core_vcns.existing_vcns.virtual_networks :
-    vcn.display_name => vcn.id...
-  }
+  value = module.rdma_platform.existing_vcns_in_compartment
 }
 
 output "availability_domain_used" {
-  description = "AD used for bastion, management VM, compute cluster, and BMs."
-  value       = local.cluster_ad
+  value = module.rdma_platform.availability_domain_used
 }
 
 output "memory_autoscale_function_ocid" {
-  description = "Legacy OCI Function OCID output (null in management-timer mode)."
-  value       = null
+  value = module.rdma_platform.memory_autoscale_function_ocid
 }
 
 output "memory_autoscale_schedule_ocid" {
-  description = "Autoscale timer name configured on management node (null when disabled)."
-  value       = var.enable_memory_autoscale ? "rdma-memory-autoscale.timer" : null
+  value = module.rdma_platform.memory_autoscale_schedule_ocid
 }
 
 output "memory_autoscale_dynamic_group_ocid" {
-  description = "Legacy output; dynamic group is now managed by stig-hardened-builds/rdma-autoscale."
-  value       = null
+  value = module.rdma_platform.memory_autoscale_dynamic_group_ocid
 }

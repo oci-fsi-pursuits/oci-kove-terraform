@@ -14,7 +14,7 @@ compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 ssh_public_key = "ssh-ed25519 AAAA...your-key... comment"
 
-# Naming (modules/kove-context) — display prefix = kove_environment-kove_stack_name with namespace
+# Naming (modules/labels) — display prefix = kove_environment-kove_stack_name with namespace
 kove_namespace   = "kove"
 kove_environment = "dev"
 kove_stack_name  = "rdma"
@@ -41,6 +41,11 @@ tags = {
 
 # Bare metal custom image (control + all memory nodes)
 bm_node_image_ocid = "ocid1.image.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+# RDMA placement mode:
+# - compute_cluster: current behavior (individual BM instances in an OCI compute cluster)
+# - cluster_network: OCI cluster network instance pool (supports Terraform-driven resize/autoscale)
+# rdma_deployment_mode = "compute_cluster"
 
 # Scale memory nodes (control is always 1). Default 2 → 3 BM instances total.
 memory_node_count = 2
@@ -70,8 +75,11 @@ memory_node_count = 2
 # bastion_image_ocid     = ""
 # management_shape       = "VM.Standard.E6.Flex"
 # management_ocpus       = 2
-# management_memory_gbs    = 16
+# management_memory_gbs  = 16
 # management_image_ocid  = ""
+# management_secondary_vnic_enabled    = false
+# management_secondary_vnic_subnet_id  = "" # empty => rdma subnet
+# management_secondary_vnic_private_ip = "" # optional static IP
 
 # RHSM for cloud-init (prefer secrets.auto.tfvars for CLI). Resource Manager: use stack variables.
 # rhsm_org_id           = "your-rhsm-org-id"

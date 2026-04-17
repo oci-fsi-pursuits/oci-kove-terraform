@@ -1,19 +1,20 @@
-# Minimal example: wire `kove-context` only (no OCI credentials required).
-module "kove_context" {
-  source = "../../modules/kove-context"
+# Minimal example: wire `labels` only (no OCI credentials required).
+module "labels" {
+  source = "../../modules/labels"
 
-  namespace   = var.namespace
-  environment = var.environment
-  stack_name  = var.stack_name
+  namespace   = "kove"
+  environment = "dev"
+  stack_name  = "example"
 
-  additional_tags        = var.additional_tags
-  include_managed_by_tag = var.include_managed_by_tag
+  additional_tags = {
+    example = "minimal"
+  }
 }
 
 output "name_prefix" {
-  value = module.kove_context.name_prefix
+  value = module.labels.name_prefix
 }
 
 output "tags" {
-  value = module.kove_context.tags
+  value = module.labels.tags
 }

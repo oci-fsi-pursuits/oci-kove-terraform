@@ -1,12 +1,12 @@
-# kove-context
+# labels
 
 No cloud resources — shared **tags** and **`name_prefix`** for consistent OCI `display_name` values.
 
 ## Usage
 
 ```hcl
-module "ctx" {
-  source = "./modules/kove-context"
+module "labels" {
+  source = "./modules/labels"
 
   namespace   = "kove"
   environment = "prod"
@@ -18,7 +18,7 @@ module "ctx" {
 }
 
 # Example display_name
-# display_name = "${module.ctx.name_prefix}-vcn"
+# display_name = "${module.labels.name_prefix}-vcn"
 ```
 
 ## Outputs

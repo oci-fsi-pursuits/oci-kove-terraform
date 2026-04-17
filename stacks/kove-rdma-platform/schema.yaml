@@ -24,6 +24,7 @@ variableGroups:
       - kove_stack_name
       - host_label_prefix
       - availability_domain
+      - rdma_deployment_mode
       - memory_node_count
       - enable_bastion
       - create_bm_console_connections
@@ -60,6 +61,9 @@ variableGroups:
       - management_ocpus
       - management_memory_gbs
       - management_image_ocid
+      - management_secondary_vnic_enabled
+      - management_secondary_vnic_subnet_id
+      - management_secondary_vnic_private_ip
 
   - title: "Bare metal (RDMA plane)"
     variables:
@@ -169,6 +173,13 @@ variables:
     title: "Memory node count"
     default: 2
     required: false
+
+  rdma_deployment_mode:
+    type: string
+    title: "RDMA deployment mode"
+    description: "compute_cluster (individual BM nodes) or cluster_network (cluster network instance pool)."
+    required: false
+    default: "compute_cluster"
 
   enable_bastion:
     type: boolean
@@ -396,6 +407,34 @@ variables:
     description: "Optional custom image for the management VM. Empty selects latest Oracle Linux 8 for the shape."
     default: ""
     required: false
+
+  management_secondary_vnic_enabled:
+    type: boolean
+    title: "Attach secondary VNIC to management"
+    default: false
+    required: false
+
+  management_secondary_vnic_subnet_id:
+    type: string
+    title: "Secondary VNIC subnet OCID (optional)"
+    description: "Subnet for management secondary VNIC. Empty defaults to the RDMA subnet."
+    default: ""
+    required: false
+    visible:
+      eq:
+        - management_secondary_vnic_enabled
+        - true
+
+  management_secondary_vnic_private_ip:
+    type: string
+    title: "Secondary VNIC private IP (optional)"
+    description: "Static private IP for management secondary VNIC. Leave empty for automatic assignment."
+    default: ""
+    required: false
+    visible:
+      eq:
+        - management_secondary_vnic_enabled
+        - true
 
   bastion_image_ocid:
     type: string

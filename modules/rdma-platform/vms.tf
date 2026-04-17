@@ -84,3 +84,14 @@ resource "oci_core_instance" "management" {
     hostname_label   = local.management_hostname
   }
 }
+
+resource "oci_core_vnic_attachment" "management_secondary" {
+  count       = var.management_secondary_vnic_enabled ? 1 : 0
+  instance_id = oci_core_instance.management.id
+
+  create_vnic_details {
+    subnet_id        = local.management_secondary_vnic_subnet_id_effective
+    assign_public_ip = false
+    private_ip       = trimspace(var.management_secondary_vnic_private_ip) != "" ? trimspace(var.management_secondary_vnic_private_ip) : null
+  }
+}

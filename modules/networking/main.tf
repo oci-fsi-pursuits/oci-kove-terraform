@@ -11,13 +11,13 @@ locals {
   oracle_services_network = data.oci_core_services.oracle_services_network.services[0]
   dhcp_search_domain      = format("%s.oraclevcn.com", local.vcn_dns_label)
 
-  vcn_name       = "${var.name_prefix}-vcn"
-  igw_name       = "${var.name_prefix}-igw"
-  nat_name       = "${var.name_prefix}-nat"
-  public_rt_name = "${var.name_prefix}-public-rt"
-  private_rt_name = "${var.name_prefix}-private-rt"
-  public_sl_name  = "${var.name_prefix}-public-sl"
-  private_sl_name = "${var.name_prefix}-private-sl"
+  vcn_name           = "${var.name_prefix}-vcn"
+  igw_name           = "${var.name_prefix}-igw"
+  nat_name           = "${var.name_prefix}-nat"
+  public_rt_name     = "${var.name_prefix}-public-rt"
+  private_rt_name    = "${var.name_prefix}-private-rt"
+  public_sl_name     = "${var.name_prefix}-public-sl"
+  private_sl_name    = "${var.name_prefix}-private-sl"
   public_subnet_name = "${var.name_prefix}-public"
   mgmt_subnet_name   = "${var.name_prefix}-mgmt"
   rdma_subnet_name   = "${var.name_prefix}-rdma"
