@@ -13,6 +13,18 @@ variable "name_prefix" {
   description = "Prefix for OKE display_name values (for example kove-dev-oke)."
 }
 
+variable "compute_system_name" {
+  type        = string
+  description = "Role label used in OKE cluster name."
+  default     = "compute-system"
+}
+
+variable "xpd_name" {
+  type        = string
+  description = "Role label used in OKE worker node pool name."
+  default     = "xpd"
+}
+
 variable "vcn_id" {
   type        = string
   description = "VCN OCID for the OKE cluster."

@@ -35,6 +35,8 @@ module "oke" {
   compartment_id       = var.compartment_ocid
   region               = var.region
   name_prefix          = module.labels.name_prefix
+  compute_system_name  = var.compute_system_name
+  xpd_name             = var.xpd_name
   vcn_id               = module.networking.vcn_id
   endpoint_subnet_id   = module.networking.public_subnet_id
   service_lb_subnet_id = module.networking.management_subnet_id

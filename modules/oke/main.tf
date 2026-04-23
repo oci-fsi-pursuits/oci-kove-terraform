@@ -1,7 +1,7 @@
 resource "oci_containerengine_cluster" "this" {
   compartment_id     = var.compartment_id
   kubernetes_version = local.k8s_version
-  name               = "${var.name_prefix}-cluster"
+  name               = "${var.name_prefix}-${trimspace(var.compute_system_name)}"
   vcn_id             = var.vcn_id
   freeform_tags      = var.tags
 
@@ -34,7 +34,7 @@ resource "oci_containerengine_node_pool" "workers" {
   cluster_id         = oci_containerengine_cluster.this.id
   compartment_id     = var.compartment_id
   kubernetes_version = local.k8s_version
-  name               = "${var.name_prefix}-workers"
+  name               = "${var.name_prefix}-${trimspace(var.xpd_name)}"
   node_shape         = var.node_pool_shape
   freeform_tags      = var.tags
 

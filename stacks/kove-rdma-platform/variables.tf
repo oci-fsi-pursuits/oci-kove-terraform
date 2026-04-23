@@ -296,89 +296,16 @@ variable "memory_node_count" {
   }
 }
 
-variable "enable_memory_autoscale" {
-  type        = bool
-  description = "Enable autoscaling for BM memory nodes using management timer + Resource Manager apply jobs."
-  default     = false
-}
-
-variable "memory_scale_threshold_percent" {
-  type        = number
-  description = "Scale-out threshold percentage for memory utilization."
-  default     = 80
-
-  validation {
-    condition     = var.memory_scale_threshold_percent > 0 && var.memory_scale_threshold_percent <= 100
-    error_message = "memory_scale_threshold_percent must be between 1 and 100."
-  }
-}
-
-variable "memory_scale_window_minutes" {
-  type        = number
-  description = "Window duration (minutes) for all-nodes threshold check."
-  default     = 5
-
-  validation {
-    condition     = var.memory_scale_window_minutes >= 1 && var.memory_scale_window_minutes <= 60
-    error_message = "memory_scale_window_minutes must be between 1 and 60."
-  }
-}
-
-variable "memory_scale_cooldown_minutes" {
-  type        = number
-  description = "Minimum time (minutes) between successful scale-out actions."
-  default     = 20
-
-  validation {
-    condition     = var.memory_scale_cooldown_minutes >= 1 && var.memory_scale_cooldown_minutes <= 1440
-    error_message = "memory_scale_cooldown_minutes must be between 1 and 1440."
-  }
-}
-
-variable "memory_node_max_count" {
-  type        = number
-  description = "Hard cap for memory_node_count when autoscaling."
-  default     = 8
-
-  validation {
-    condition     = var.memory_node_max_count >= 0 && var.memory_node_max_count <= 64
-    error_message = "memory_node_max_count must be between 0 and 64."
-  }
-}
-
-variable "memory_autoscale_check_interval_minutes" {
-  type        = number
-  description = "Scheduled autoscaler run interval in minutes."
-  default     = 5
-
-  validation {
-    condition     = var.memory_autoscale_check_interval_minutes >= 1 && var.memory_autoscale_check_interval_minutes <= 60
-    error_message = "memory_autoscale_check_interval_minutes must be between 1 and 60."
-  }
-}
-
-variable "resource_manager_stack_id" {
+variable "compute_system_name" {
   type        = string
-  description = "Resource Manager stack OCID targeted by autoscaler apply jobs."
-  default     = ""
+  description = "Role label for RDMA control/orchestrator resources."
+  default     = "compute-system"
 }
 
-variable "resource_manager_stack_compartment_ocid" {
+variable "xpd_name" {
   type        = string
-  description = "Optional compartment OCID hosting Resource Manager stack; defaults to compartment_ocid."
-  default     = ""
-}
-
-variable "resource_manager_region" {
-  type        = string
-  description = "Region hosting Resource Manager stack (for example us-phoenix-1). Empty defaults to identity_home_region."
-  default     = ""
-}
-
-variable "memory_autoscale_dry_run" {
-  type        = bool
-  description = "When true, autoscaler logs intent but does not submit Resource Manager jobs."
-  default     = false
+  description = "Role label for RDMA memory node resources."
+  default     = "xpd"
 }
 
 variable "bm_capacity_reservation_id" {
@@ -424,6 +351,128 @@ variable "create_bm_console_connections" {
   type        = bool
   description = "Create OCI instance console connections for each BM (serial/VNC over SSH tunnel)"
   default     = false
+}
+
+# ---------------------------------------------------------------------------
+# Optional MC host (separate from RDMA BM stack)
+# ---------------------------------------------------------------------------
+variable "enable_mc_instance" {
+  type        = bool
+  description = "Create a dedicated MC KVM host VM."
+  default     = false
+}
+
+variable "mc_subnet_id" {
+  type        = string
+  description = "Optional subnet OCID for the MC host. Empty = management subnet from rdma_platform module."
+  default     = ""
+}
+
+variable "mc_availability_domain" {
+  type        = string
+  description = "Optional AD override for MC host. Empty = availability_domain_used from rdma_platform module."
+  default     = ""
+}
+
+variable "mc_assign_public_ip" {
+  type        = bool
+  description = "Assign public IP to MC host primary VNIC."
+  default     = false
+}
+
+variable "mc_shape" {
+  type        = string
+  description = "MC host VM shape."
+  default     = "VM.Standard3.Flex"
+}
+
+variable "mc_ocpus" {
+  type        = number
+  description = "MC host OCPUs."
+  default     = 3
+}
+
+variable "mc_memory_gbs" {
+  type        = number
+  description = "MC host memory in GB."
+  default     = 32
+}
+
+variable "mc_boot_volume_size_gbs" {
+  type        = number
+  description = "MC host boot volume size in GB."
+  default     = 200
+}
+
+variable "mc_deployment_mode" {
+  type        = string
+  description = "MC deployment mode: custom_image or cloud_init_setup."
+  default     = "custom_image"
+
+  validation {
+    condition     = contains(["custom_image", "cloud_init_setup"], trimspace(var.mc_deployment_mode))
+    error_message = "mc_deployment_mode must be custom_image or cloud_init_setup."
+  }
+}
+
+variable "mc_custom_image_ocid" {
+  type        = string
+  description = "Custom image OCID used when mc_deployment_mode = custom_image."
+  default     = ""
+}
+
+variable "mc_base_image_ocid" {
+  type        = string
+  description = "Optional base image OCID used when mc_deployment_mode = cloud_init_setup. Empty = latest Oracle Linux 8 for mc_shape."
+  default     = ""
+}
+
+variable "mc_cloud_init_template_path" {
+  type        = string
+  description = "Optional custom cloud-init template path for MC host cloud_init_setup mode."
+  default     = ""
+}
+
+variable "mc_instance_name_suffix" {
+  type        = string
+  description = "Display name suffix for MC host."
+  default     = "mc-host"
+}
+
+variable "mc_hostname_label" {
+  type        = string
+  description = "Optional hostname label for MC host primary VNIC."
+  default     = ""
+}
+
+variable "mc_setup_script_path" {
+  type        = string
+  description = "Path created on the MC host for the post-cloud-init KVM setup helper script."
+  default     = "/opt/kove/setup-kove-mc.sh"
+}
+
+variable "mc_guest_vm_name" {
+  type        = string
+  description = "Default KVM guest domain name used by the MC setup helper script."
+  default     = "kove-mc"
+}
+
+variable "mc_guest_disk_path" {
+  type        = string
+  description = "Default qcow2 path used by the MC setup helper script."
+  default     = "/var/lib/libvirt/images/kove-mc.qcow2"
+}
+
+variable "mc_guest_memory_mb" {
+  type        = number
+  description = "Default guest memory (MB) used by the MC setup helper script."
+  default     = 8192
+}
+
+variable "mc_guest_vcpus" {
+  type        = number
+  description = "Default guest vCPUs used by the MC setup helper script."
+  default     = 2
 }
 
 variable "tags" {

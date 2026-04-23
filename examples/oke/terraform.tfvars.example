@@ -9,6 +9,8 @@ availability_domain = "REPLACE-ME"
 namespace   = "kove"
 environment = "dev"
 stack_name  = "oke"
+compute_system_name = "compute-system"
+xpd_name            = "xpd"
 
 vcn_cidr_block = "10.20.0.0/16"
 

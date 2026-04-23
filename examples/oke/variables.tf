@@ -34,6 +34,16 @@ variable "stack_name" {
   default = "oke"
 }
 
+variable "compute_system_name" {
+  type    = string
+  default = "compute-system"
+}
+
+variable "xpd_name" {
+  type    = string
+  default = "xpd"
+}
+
 variable "vcn_cidr_block" {
   type    = string
   default = "10.20.0.0/16"

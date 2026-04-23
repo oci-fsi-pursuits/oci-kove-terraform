@@ -6,12 +6,16 @@ locals {
 
   host_label_prefix = length(trimspace(var.host_label_prefix)) > 0 ? substr(replace(replace(lower(trimspace(var.host_label_prefix)), "-", ""), "_", ""), 0, 12) : ""
 
-  bastion_name         = "${local.name_prefix}-bastion"
-  management_name      = "${local.name_prefix}-management"
-  compute_cluster_name = "${local.name_prefix}-compute-cluster"
-  bm_name_prefix       = "${local.name_prefix}-bm"
-  bastion_hostname     = local.host_label_prefix != "" ? "${local.host_label_prefix}bastion" : "bastion"
-  management_hostname  = local.host_label_prefix != "" ? "${local.host_label_prefix}mgmt" : "mgmt"
+  bastion_name            = "${local.name_prefix}-bastion"
+  management_name         = "${local.name_prefix}-management"
+  compute_cluster_name    = "${local.name_prefix}-compute-cluster"
+  bm_name_prefix          = "${local.name_prefix}-bm"
+  compute_system_name     = trimspace(var.compute_system_name)
+  xpd_name                = trimspace(var.xpd_name)
+  bastion_hostname        = local.host_label_prefix != "" ? "${local.host_label_prefix}bastion" : "bastion"
+  management_hostname     = local.host_label_prefix != "" ? "${local.host_label_prefix}mgmt" : "mgmt"
+  rdma_host_label_prefix  = local.host_label_prefix != "" ? substr(local.host_label_prefix, 0, 8) : ""
+  compute_system_hostname = local.rdma_host_label_prefix != "" ? "${local.rdma_host_label_prefix}csys" : "compsys"
 
   vcn_id = var.use_existing_vcn ? var.existing_vcn_id : module.networking[0].vcn_id
 
@@ -33,8 +37,7 @@ locals {
     )
   )
 
-  bm_instance_create_timeout    = trimspace(var.cluster_network_create_timeout) != "" ? var.cluster_network_create_timeout : "2h"
-  autoscale_rm_compartment_ocid = trimspace(var.resource_manager_stack_compartment_ocid) != "" ? trimspace(var.resource_manager_stack_compartment_ocid) : var.compartment_ocid
+  bm_instance_create_timeout = trimspace(var.cluster_network_create_timeout) != "" ? var.cluster_network_create_timeout : "2h"
 
   cluster_ssh_authorized_keys = join("\n", compact([
     trimspace(replace(var.ssh_public_key, "\r", "")),
@@ -44,10 +47,20 @@ locals {
   bm_total_count           = 1 + var.memory_node_count
   use_compute_cluster_mode = trimspace(var.rdma_deployment_mode) == "compute_cluster"
   use_cluster_network_mode = trimspace(var.rdma_deployment_mode) == "cluster_network"
-  cluster_network_instance_ids = local.use_cluster_network_mode ? [
+  cluster_network_memory_instance_ids = local.use_cluster_network_mode ? [
     for instance in data.oci_core_cluster_network_instances.rdma[0].instances : instance["id"]
   ] : []
-  cluster_network_instance_private_ips = local.use_cluster_network_mode ? data.oci_core_instance.cluster_network_instances[*].private_ip : []
+  cluster_network_memory_private_ips  = local.use_cluster_network_mode ? data.oci_core_instance.cluster_network_instances[*].private_ip : []
+  cluster_network_control_instance_id = local.use_cluster_network_mode ? oci_core_instance.cluster_network_control[0].id : null
+  cluster_network_control_private_ip  = local.use_cluster_network_mode ? oci_core_instance.cluster_network_control[0].private_ip : null
+  cluster_network_instance_ids = local.use_cluster_network_mode ? concat(
+    compact([local.cluster_network_control_instance_id]),
+    local.cluster_network_memory_instance_ids,
+  ) : []
+  cluster_network_instance_private_ips = local.use_cluster_network_mode ? concat(
+    compact([local.cluster_network_control_private_ip]),
+    local.cluster_network_memory_private_ips,
+  ) : []
 
   management_secondary_vnic_subnet_id_effective = trimspace(var.management_secondary_vnic_subnet_id) != "" ? trimspace(var.management_secondary_vnic_subnet_id) : local.rdma_subnet_id
 
@@ -63,42 +76,22 @@ locals {
 
   cloud_init_common_vars = merge(
     {
-      rhsm_org_id                             = var.rhsm_org_id
-      rhsm_activation_key                     = var.rhsm_activation_key
-      playbooks_zip_url                       = var.playbooks_zip_url
-      authorized_keys_b64                     = base64encode(local.cluster_ssh_authorized_keys)
-      imds_key_bootstrap                      = tostring(var.bm_imds_ssh_key_bootstrap)
-      rdma_use_oca_plugin                     = tostring(var.use_compute_agent)
-      primary_login_user                      = "cloud-user"
-      compartment_ocid                        = var.compartment_ocid
-      rdma_interface                          = "eth2"
-      enable_memory_autoscale                 = "false"
-      memory_scale_threshold_percent          = "80"
-      memory_scale_window_minutes             = "5"
-      memory_scale_cooldown_minutes           = "20"
-      memory_node_max_count                   = tostring(var.memory_node_max_count)
-      memory_autoscale_check_interval_minutes = "5"
-      resource_manager_stack_id               = ""
-      resource_manager_stack_compartment      = local.autoscale_rm_compartment_ocid
-      resource_manager_region                 = var.identity_home_region
-      memory_autoscale_dry_run                = "false"
+      rhsm_org_id         = var.rhsm_org_id
+      rhsm_activation_key = var.rhsm_activation_key
+      playbooks_zip_url   = var.playbooks_zip_url
+      authorized_keys_b64 = base64encode(local.cluster_ssh_authorized_keys)
+      imds_key_bootstrap  = tostring(var.bm_imds_ssh_key_bootstrap)
+      rdma_use_oca_plugin = tostring(var.use_compute_agent)
+      primary_login_user  = "cloud-user"
+      compartment_ocid    = var.compartment_ocid
+      rdma_interface      = "eth2"
     },
     var.cloud_init_template_extra_vars,
   )
 
   bastion_cloud_init_vars = merge(local.cloud_init_common_vars, { node_role = "bastion" })
   management_cloud_init_vars = merge(local.cloud_init_common_vars, {
-    node_role                               = "management"
-    enable_memory_autoscale                 = tostring(var.enable_memory_autoscale)
-    memory_scale_threshold_percent          = tostring(var.memory_scale_threshold_percent)
-    memory_scale_window_minutes             = tostring(var.memory_scale_window_minutes)
-    memory_scale_cooldown_minutes           = tostring(var.memory_scale_cooldown_minutes)
-    memory_node_max_count                   = tostring(var.memory_node_max_count)
-    memory_autoscale_check_interval_minutes = tostring(var.memory_autoscale_check_interval_minutes)
-    resource_manager_stack_id               = var.resource_manager_stack_id
-    resource_manager_stack_compartment      = local.autoscale_rm_compartment_ocid
-    resource_manager_region                 = trimspace(var.resource_manager_region) != "" ? trimspace(var.resource_manager_region) : var.identity_home_region
-    memory_autoscale_dry_run                = tostring(var.memory_autoscale_dry_run)
+    node_role = "management"
   })
   bm_cloud_init_vars = merge(local.cloud_init_common_vars, { node_role = "bm" })
 

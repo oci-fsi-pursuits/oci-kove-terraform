@@ -13,6 +13,8 @@ This module expects networking inputs (VCN and subnets) to already exist. A comm
 - `compartment_id`
 - `region`
 - `name_prefix`
+- `compute_system_name` (default `compute-system`)
+- `xpd_name` (default `xpd`)
 - `vcn_id`
 - `endpoint_subnet_id`
 - `service_lb_subnet_id`

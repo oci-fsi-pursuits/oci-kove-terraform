@@ -96,14 +96,26 @@ output "availability_domain_used" {
   value = module.rdma_platform.availability_domain_used
 }
 
-output "memory_autoscale_function_ocid" {
-  value = module.rdma_platform.memory_autoscale_function_ocid
+output "mc_instance_id" {
+  value = var.enable_mc_instance ? module.mc_instance[0].instance_id : null
 }
 
-output "memory_autoscale_schedule_ocid" {
-  value = module.rdma_platform.memory_autoscale_schedule_ocid
+output "mc_private_ip" {
+  value = var.enable_mc_instance ? module.mc_instance[0].private_ip : null
 }
 
-output "memory_autoscale_dynamic_group_ocid" {
-  value = module.rdma_platform.memory_autoscale_dynamic_group_ocid
+output "mc_public_ip" {
+  value = var.enable_mc_instance ? module.mc_instance[0].public_ip : null
+}
+
+output "mc_deployment_mode" {
+  value = var.enable_mc_instance ? module.mc_instance[0].deployment_mode : null
+}
+
+output "mc_setup_script_path" {
+  value = var.enable_mc_instance ? module.mc_instance[0].setup_script_path : null
+}
+
+output "mc_setup_script_run_command" {
+  value = var.enable_mc_instance ? module.mc_instance[0].setup_script_run_command : null
 }

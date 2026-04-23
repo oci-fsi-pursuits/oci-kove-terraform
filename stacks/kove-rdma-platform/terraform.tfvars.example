@@ -49,6 +49,9 @@ bm_node_image_ocid = "ocid1.image.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 # Scale memory nodes (control is always 1). Default 2 → 3 BM instances total.
 memory_node_count = 2
+# Role naming for RDMA plane
+# compute_system_name = "compute-system"
+# xpd_name            = "xpd"
 
 # Bare metal plane (matches Resource Manager group "Bare metal (RDMA plane)")
 # bm_node_shape                  = "BM.Optimized3.36"
@@ -89,14 +92,31 @@ memory_node_count = 2
 # Serial console over SSH tunnel (optional)
 # create_bm_console_connections = false
 
-# Memory autoscale on management VM (apply Resource Manager jobs). Apply IAM from rdma-autoscale first.
-# enable_memory_autoscale                 = true
-# resource_manager_stack_id               = "ocid1.ormstack.oc1..aaaa"
-# resource_manager_stack_compartment_ocid = "ocid1.compartment.oc1..aaaa"
-# resource_manager_region                 = "us-phoenix-1"
-# memory_scale_threshold_percent          = 80
-# memory_scale_window_minutes             = 5
-# memory_scale_cooldown_minutes           = 20
-# memory_node_max_count                   = 8
-# memory_autoscale_check_interval_minutes = 5
-# memory_autoscale_dry_run                = false
+# Optional dedicated MC host VM (separate from RDMA BM plane)
+# enable_mc_instance = true
+# mc_shape               = "VM.Standard3.Flex"
+# mc_ocpus               = 3
+# mc_memory_gbs          = 32
+# mc_boot_volume_size_gbs = 200
+# mc_assign_public_ip    = false
+# mc_subnet_id           = "" # empty => management subnet from this stack
+# mc_availability_domain = "" # empty => same AD resolved by this stack
+#
+# Cloud-init runs in both modes.
+#
+# Option 1: use custom image for host OS baseline
+# mc_deployment_mode     = "custom_image"
+# mc_custom_image_ocid   = "ocid1.image.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+#
+# Option 2: run KVM host prep by cloud-init, then manually copy OVA and run setup script
+# mc_deployment_mode          = "cloud_init_setup"
+# mc_base_image_ocid          = "" # empty => latest Oracle Linux 8 compatible with mc_shape
+# mc_cloud_init_template_path = ""
+# mc_setup_script_path        = "/opt/kove/setup-kove-mc.sh"
+# mc_guest_vm_name            = "kove-mc"
+# mc_guest_disk_path          = "/var/lib/libvirt/images/kove-mc.qcow2"
+# mc_guest_vcpus              = 2
+# mc_guest_memory_mb          = 8192
+
+# Autoscaling is no longer configured in this stack.
+# Use modules/rdma-autoscale for OCI Function + alarm autoscaling.

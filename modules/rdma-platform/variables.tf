@@ -296,89 +296,16 @@ variable "memory_node_count" {
   }
 }
 
-variable "enable_memory_autoscale" {
-  type        = bool
-  description = "Enable autoscaling for BM memory nodes using management timer + Resource Manager apply jobs."
-  default     = false
-}
-
-variable "memory_scale_threshold_percent" {
-  type        = number
-  description = "Scale-out threshold percentage for memory utilization."
-  default     = 80
-
-  validation {
-    condition     = var.memory_scale_threshold_percent > 0 && var.memory_scale_threshold_percent <= 100
-    error_message = "memory_scale_threshold_percent must be between 1 and 100."
-  }
-}
-
-variable "memory_scale_window_minutes" {
-  type        = number
-  description = "Window duration (minutes) for all-nodes threshold check."
-  default     = 5
-
-  validation {
-    condition     = var.memory_scale_window_minutes >= 1 && var.memory_scale_window_minutes <= 60
-    error_message = "memory_scale_window_minutes must be between 1 and 60."
-  }
-}
-
-variable "memory_scale_cooldown_minutes" {
-  type        = number
-  description = "Minimum time (minutes) between successful scale-out actions."
-  default     = 20
-
-  validation {
-    condition     = var.memory_scale_cooldown_minutes >= 1 && var.memory_scale_cooldown_minutes <= 1440
-    error_message = "memory_scale_cooldown_minutes must be between 1 and 1440."
-  }
-}
-
-variable "memory_node_max_count" {
-  type        = number
-  description = "Hard cap for memory_node_count when autoscaling."
-  default     = 8
-
-  validation {
-    condition     = var.memory_node_max_count >= 0 && var.memory_node_max_count <= 64
-    error_message = "memory_node_max_count must be between 0 and 64."
-  }
-}
-
-variable "memory_autoscale_check_interval_minutes" {
-  type        = number
-  description = "Scheduled autoscaler run interval in minutes."
-  default     = 5
-
-  validation {
-    condition     = var.memory_autoscale_check_interval_minutes >= 1 && var.memory_autoscale_check_interval_minutes <= 60
-    error_message = "memory_autoscale_check_interval_minutes must be between 1 and 60."
-  }
-}
-
-variable "resource_manager_stack_id" {
+variable "compute_system_name" {
   type        = string
-  description = "Resource Manager stack OCID targeted by autoscaler apply jobs."
-  default     = ""
+  description = "Display-name role label for the RDMA control/orchestrator node."
+  default     = "compute-system"
 }
 
-variable "resource_manager_stack_compartment_ocid" {
+variable "xpd_name" {
   type        = string
-  description = "Optional compartment OCID hosting Resource Manager stack; defaults to compartment_ocid."
-  default     = ""
-}
-
-variable "resource_manager_region" {
-  type        = string
-  description = "Region hosting Resource Manager stack (for example us-phoenix-1). Empty defaults to identity_home_region."
-  default     = ""
-}
-
-variable "memory_autoscale_dry_run" {
-  type        = bool
-  description = "When true, autoscaler logs intent but does not submit Resource Manager jobs."
-  default     = false
+  description = "Display-name role label for RDMA memory nodes."
+  default     = "xpd"
 }
 
 variable "bm_capacity_reservation_id" {

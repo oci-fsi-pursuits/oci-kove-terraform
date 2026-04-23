@@ -1,12 +1,12 @@
 # Modules
 
-| Module | Status | Description |
-|--------|--------|-------------|
-| [labels](./labels/) | **Initial** | Standard `freeform_tags` and `name_prefix` (`namespace-environment-stack_name`). |
-| [networking](./networking/) | **Initial** | New VCN + 3 subnets (public / mgmt / RDMA) + gateways + route tables + SLs. |
-| [oke](./oke/) | **Initial** | OKE cluster + worker node pool using supplied VCN/subnets. |
-| [rdma-platform](./rdma-platform/) | **Initial** | Full RDMA deployment module (networking, controller, BM plane, autoscale hooks). |
+| Module | Purpose |
+|---|---|
+| [labels](./labels/) | Standard naming prefix and freeform tags. |
+| [mc-instance](./mc-instance/) | Dedicated MC KVM host VM with custom-image or cloud-init setup modes. |
+| [networking](./networking/) | VCN, public/private subnets, gateways, route tables, and security lists. |
+| [oke](./oke/) | OKE cluster and worker node pool on supplied networking. |
+| [rdma-platform](./rdma-platform/) | Full RDMA platform infrastructure deployment module. |
+| [rdma-autoscale](./rdma-autoscale/) | OCI Function + Monitoring alarm autoscaling overlay module. |
 
-**Planned (not yet extracted as modules):** **compute** (instances, instance pools), **placement** (cluster placement groups — rack-aware placement for compute, not VCN networking), **autoscaling** (instance pool / cluster autoscaler patterns).
-
-Module directories use short **kebab-case** names (`labels`, `networking`, `oke`, `rdma-platform`). Document required provider versions in each module’s `versions.tf`.
+Use modules directly for custom compositions, or use stack wrappers in `stacks/` for opinionated deployments.

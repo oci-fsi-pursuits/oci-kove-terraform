@@ -61,17 +61,45 @@ module "rdma_platform" {
   cluster_placement_group_name        = var.cluster_placement_group_name
   cluster_placement_group_description = var.cluster_placement_group_description
 
-  memory_node_count                       = var.memory_node_count
-  enable_memory_autoscale                 = var.enable_memory_autoscale
-  memory_scale_threshold_percent          = var.memory_scale_threshold_percent
-  memory_scale_window_minutes             = var.memory_scale_window_minutes
-  memory_scale_cooldown_minutes           = var.memory_scale_cooldown_minutes
-  memory_node_max_count                   = var.memory_node_max_count
-  memory_autoscale_check_interval_minutes = var.memory_autoscale_check_interval_minutes
-  resource_manager_stack_id               = var.resource_manager_stack_id
-  resource_manager_stack_compartment_ocid = var.resource_manager_stack_compartment_ocid
-  resource_manager_region                 = var.resource_manager_region
-  memory_autoscale_dry_run                = var.memory_autoscale_dry_run
+  memory_node_count   = var.memory_node_count
+  compute_system_name = var.compute_system_name
+  xpd_name            = var.xpd_name
 
   tags = var.tags
+}
+
+module "mc_instance" {
+  count  = var.enable_mc_instance ? 1 : 0
+  source = "../../modules/mc-instance"
+
+  tenancy_ocid        = var.tenancy_ocid
+  compartment_ocid    = var.compartment_ocid
+  subnet_id           = trimspace(var.mc_subnet_id) != "" ? trimspace(var.mc_subnet_id) : module.rdma_platform.management_subnet_ocid
+  availability_domain = trimspace(var.mc_availability_domain) != "" ? trimspace(var.mc_availability_domain) : module.rdma_platform.availability_domain_used
+  ssh_public_key      = var.ssh_public_key
+
+  kove_namespace   = var.kove_namespace
+  kove_environment = var.kove_environment
+  kove_stack_name  = var.kove_stack_name
+  tags             = var.tags
+
+  instance_name_suffix = var.mc_instance_name_suffix
+  hostname_label       = var.mc_hostname_label
+  assign_public_ip     = var.mc_assign_public_ip
+
+  shape                = var.mc_shape
+  ocpus                = var.mc_ocpus
+  memory_gbs           = var.mc_memory_gbs
+  boot_volume_size_gbs = var.mc_boot_volume_size_gbs
+
+  deployment_mode          = var.mc_deployment_mode
+  custom_image_ocid        = var.mc_custom_image_ocid
+  base_image_ocid          = var.mc_base_image_ocid
+  cloud_init_template_path = var.mc_cloud_init_template_path
+
+  setup_script_path = var.mc_setup_script_path
+  guest_vm_name     = var.mc_guest_vm_name
+  guest_disk_path   = var.mc_guest_disk_path
+  guest_memory_mb   = var.mc_guest_memory_mb
+  guest_vcpus       = var.mc_guest_vcpus
 }

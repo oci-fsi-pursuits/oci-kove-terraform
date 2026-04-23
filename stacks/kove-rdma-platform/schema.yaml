@@ -1,5 +1,5 @@
 title: "Kove RDMA Platform"
-description: "Bare metal RDMA stack: optional bastion, management VM, VCN or existing subnets, optional memory-node autoscale via Resource Manager."
+description: "Bare metal RDMA infrastructure stack: optional bastion, management VM, and VCN/new or existing subnets."
 schemaVersion: 1.1.0
 version: "20190304"
 locale: "en"
@@ -26,7 +26,10 @@ variableGroups:
       - availability_domain
       - rdma_deployment_mode
       - memory_node_count
+      - compute_system_name
+      - xpd_name
       - enable_bastion
+      - enable_mc_instance
       - create_bm_console_connections
 
   - title: "Networking"
@@ -65,6 +68,25 @@ variableGroups:
       - management_secondary_vnic_subnet_id
       - management_secondary_vnic_private_ip
 
+  - title: "MC host VM (optional)"
+    variables:
+      - mc_shape
+      - mc_ocpus
+      - mc_memory_gbs
+      - mc_boot_volume_size_gbs
+      - mc_assign_public_ip
+      - mc_subnet_id
+      - mc_availability_domain
+      - mc_deployment_mode
+      - mc_custom_image_ocid
+      - mc_base_image_ocid
+      - mc_cloud_init_template_path
+      - mc_setup_script_path
+      - mc_guest_vm_name
+      - mc_guest_disk_path
+      - mc_guest_vcpus
+      - mc_guest_memory_mb
+
   - title: "Bare metal (RDMA plane)"
     variables:
       - bm_node_shape
@@ -76,19 +98,6 @@ variableGroups:
       - bm_imds_ssh_key_bootstrap
       - bm_capacity_reservation_id
       - cluster_network_create_timeout
-
-  - title: "Memory autoscale (Resource Manager apply jobs)"
-    variables:
-      - enable_memory_autoscale
-      - resource_manager_stack_id
-      - resource_manager_stack_compartment_ocid
-      - resource_manager_region
-      - memory_scale_threshold_percent
-      - memory_scale_window_minutes
-      - memory_scale_cooldown_minutes
-      - memory_node_max_count
-      - memory_autoscale_check_interval_minutes
-      - memory_autoscale_dry_run
 
   - title: "Advanced"
     variables:
@@ -174,6 +183,20 @@ variables:
     default: 2
     required: false
 
+  compute_system_name:
+    type: string
+    title: "Compute system role label"
+    description: "Used in RDMA control-node display names."
+    default: "compute-system"
+    required: false
+
+  xpd_name:
+    type: string
+    title: "XPD role label"
+    description: "Used in RDMA memory-node display names."
+    default: "xpd"
+    required: false
+
   rdma_deployment_mode:
     type: string
     title: "RDMA deployment mode"
@@ -185,6 +208,13 @@ variables:
     type: boolean
     title: "Create bastion"
     default: true
+    required: false
+
+  enable_mc_instance:
+    type: boolean
+    title: "Create MC host VM"
+    description: "Deploy a separate MC KVM host VM in addition to the RDMA platform."
+    default: false
     required: false
 
   use_existing_vcn:
@@ -261,71 +291,6 @@ variables:
     type: string
     title: "Extra private subnet SSH CIDRs"
     default: ""
-    required: false
-
-  enable_memory_autoscale:
-    type: boolean
-    title: "Enable management autoscale timer"
-    description: "Runs scale checks on the management VM and can submit Resource Manager apply jobs. Set stack OCIDs below after the first apply (or from the OCI console)."
-    default: false
-    required: false
-
-  resource_manager_stack_id:
-    type: string
-    title: "Resource Manager stack OCID (autoscale target)"
-    description: "The Terraform stack OCID this deployment should update when scaling memory nodes (usually this stack, from Stack details in Resource Manager)."
-    default: ""
-    required: false
-
-  resource_manager_stack_compartment_ocid:
-    type: string
-    title: "RM stack compartment OCID (optional)"
-    description: "Compartment OCID of the Resource Manager stack to update when autoscaling. Leave empty to use the deployment compartment."
-    default: ""
-    required: false
-
-  resource_manager_region:
-    type: string
-    title: "RM stack region (optional)"
-    description: "Region name for that stack (e.g. us-phoenix-1). Leave empty to use identity_home_region."
-    default: ""
-    required: false
-
-  memory_scale_threshold_percent:
-    type: number
-    title: "Scale threshold (%)"
-    default: 80
-    required: false
-
-  memory_scale_window_minutes:
-    type: number
-    title: "Scale window minutes"
-    default: 5
-    required: false
-
-  memory_scale_cooldown_minutes:
-    type: number
-    title: "Cooldown minutes"
-    default: 20
-    required: false
-
-  memory_node_max_count:
-    type: number
-    title: "Max memory nodes"
-    default: 8
-    required: false
-
-  memory_autoscale_check_interval_minutes:
-    type: number
-    title: "Autoscale check interval (minutes)"
-    default: 5
-    required: false
-
-  memory_autoscale_dry_run:
-    type: boolean
-    title: "Autoscale dry run"
-    description: "When true, the management script logs intent but does not submit Resource Manager jobs."
-    default: false
     required: false
 
   management_shape:
@@ -435,6 +400,205 @@ variables:
       eq:
         - management_secondary_vnic_enabled
         - true
+
+  mc_shape:
+    type: string
+    title: "MC host shape"
+    default: "VM.Standard3.Flex"
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_ocpus:
+    type: number
+    title: "MC host OCPUs"
+    default: 3
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_memory_gbs:
+    type: number
+    title: "MC host memory (GB)"
+    default: 32
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_boot_volume_size_gbs:
+    type: number
+    title: "MC host boot volume size (GB)"
+    default: 200
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_assign_public_ip:
+    type: boolean
+    title: "Assign public IP to MC host"
+    default: false
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_subnet_id:
+    type: string
+    title: "MC host subnet OCID (optional)"
+    description: "Leave empty to use management subnet from this stack."
+    default: ""
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_availability_domain:
+    type: string
+    title: "MC host AD (optional)"
+    description: "Leave empty to use the same AD resolved by this stack."
+    default: ""
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_deployment_mode:
+    type: string
+    title: "MC deployment mode"
+    description: "custom_image or cloud_init_setup."
+    default: "custom_image"
+    required: false
+    visible:
+      eq:
+        - enable_mc_instance
+        - true
+
+  mc_custom_image_ocid:
+    type: string
+    title: "MC custom image OCID"
+    description: "Required when mc_deployment_mode = custom_image. Cloud-init is still applied."
+    default: ""
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - custom_image
+
+  mc_base_image_ocid:
+    type: string
+    title: "MC base image OCID (optional)"
+    description: "Used for cloud_init_setup. Empty picks latest Oracle Linux 8 for mc_shape."
+    default: ""
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - cloud_init_setup
+
+  mc_cloud_init_template_path:
+    type: string
+    title: "MC cloud-init template path"
+    description: "Optional path for cloud_init_setup mode."
+    default: ""
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - cloud_init_setup
+
+  mc_setup_script_path:
+    type: string
+    title: "MC setup script path"
+    description: "Path created on host for post-copy OVA setup helper script."
+    default: "/opt/kove/setup-kove-mc.sh"
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - cloud_init_setup
+
+  mc_guest_vm_name:
+    type: string
+    title: "MC guest VM name"
+    default: "kove-mc"
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - cloud_init_setup
+
+  mc_guest_disk_path:
+    type: string
+    title: "MC guest qcow2 path"
+    default: "/var/lib/libvirt/images/kove-mc.qcow2"
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - cloud_init_setup
+
+  mc_guest_vcpus:
+    type: number
+    title: "MC guest vCPUs"
+    default: 2
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - cloud_init_setup
+
+  mc_guest_memory_mb:
+    type: number
+    title: "MC guest memory (MB)"
+    default: 8192
+    required: false
+    visible:
+      and:
+        - eq:
+            - enable_mc_instance
+            - true
+        - eq:
+            - mc_deployment_mode
+            - cloud_init_setup
 
   bastion_image_ocid:
     type: string
