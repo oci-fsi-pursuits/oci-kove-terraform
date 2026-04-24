@@ -1,0 +1,52 @@
+# Standalone IAM stack for RDMA memory autoscaler.
+# Copy to terraform.tfvars and fill values for your tenancy/compartment.
+
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+region           = "eu-frankfurt-1"
+identity_home_region = "us-phoenix-1"
+compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+name_prefix = "kove-rdma"
+
+# Strongly recommended: lock dynamic-group membership to management instance.
+# Leave empty to match all instances in compartment (broader access).
+management_instance_ocid = "ocid1.instance.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+# Optional: compartment that hosts Resource Manager stack.
+# Empty defaults to compartment_ocid.
+resource_manager_stack_compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+enable_memory_autoscale_iam = true
+
+resource_manager_stack_id = "ocid1.ormstack.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+resource_manager_region   = "eu-frankfurt-1"
+
+memory_scale_threshold_percent          = 80
+memory_scale_window_minutes             = 5
+memory_scale_rule                       = "all_nodes" # all_nodes | any_node | average_nodes
+memory_scale_cooldown_minutes           = 20
+memory_node_max_count                   = 8
+memory_autoscale_dry_run                = false
+
+# Optional OCI Functions mode.
+enable_function_autoscale         = false
+function_application_name          = "rdma-memory-autoscale-app"
+function_name                      = "rdma-memory-autoscale"
+function_application_subnet_ids    = ["ocid1.subnet.oc1..example"]
+# Use one of:
+# 1) Existing OCIR image:
+function_image_uri                 = ""
+# 2) Terraform build+push image target:
+function_image_ocir_uri            = "iad.ocir.io/namespace/rdma-autoscale:latest"
+function_memory_in_mbs             = 512
+function_timeout_in_seconds        = 120
+enable_function_alarm_trigger      = false
+function_alarm_query_override      = ""
+function_alarm_pending_duration    = "PT5M"
+
+# Optional Terraform-managed Docker build/push to OCIR.
+enable_function_image_build = false
+function_source_dir         = "function"
+ocir_registry               = "iad.ocir.io"
+ocir_username               = "namespace/user"
+# ocir_auth_token            = "<auth-token>"

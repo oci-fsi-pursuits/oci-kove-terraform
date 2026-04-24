@@ -41,6 +41,8 @@ resource "oci_core_instance" "bastion" {
 }
 
 resource "oci_core_instance" "management" {
+  count = var.enable_management_instance ? 1 : 0
+
   lifecycle {
     precondition {
       condition     = local.management_image_id != ""
@@ -86,8 +88,8 @@ resource "oci_core_instance" "management" {
 }
 
 resource "oci_core_vnic_attachment" "management_secondary" {
-  count       = var.management_secondary_vnic_enabled ? 1 : 0
-  instance_id = oci_core_instance.management.id
+  count       = var.enable_management_instance && var.management_secondary_vnic_enabled ? 1 : 0
+  instance_id = oci_core_instance.management[0].id
 
   create_vnic_details {
     subnet_id        = local.management_secondary_vnic_subnet_id_effective

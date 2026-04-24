@@ -1,0 +1,51 @@
+# Existing-build minimal Function autoscaler example.
+# Goal: only tune three knobs below after initial setup.
+#
+# Tunables (change these as needed):
+memory_scale_threshold_percent = 80
+memory_scale_window_minutes    = 5
+memory_scale_rule              = "all_nodes" # all_nodes | any_node | average_nodes
+#
+# --- one-time wiring (set once, then keep stable) ---
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+region           = "us-ashburn-1"
+identity_home_region = "us-phoenix-1"
+compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+name_prefix = "kove-ash"
+
+# Scope IAM to this existing management node.
+management_instance_ocid = "ocid1.instance.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+resource_manager_stack_compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+enable_memory_autoscale_iam = true
+
+# Required: target rdma-platform Resource Manager stack in this region.
+resource_manager_stack_id = "ocid1.ormstack.oc1.iad.<set-your-stack-id>"
+resource_manager_region   = "us-ashburn-1"
+
+memory_scale_cooldown_minutes           = 20
+memory_node_max_count                   = 8
+memory_autoscale_dry_run                = false
+
+# Function runtime
+enable_function_autoscale      = true
+function_application_name       = "kove-ash-memory-autoscale-app"
+function_name                   = "kove-ash-memory-autoscale"
+function_application_subnet_ids = ["ocid1.subnet.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
+function_image_uri              = "" # leave empty to use Terraform build/push target below
+function_image_ocir_uri         = "iad.ocir.io/<namespace>/kove-ash-memory-autoscale:latest"
+function_memory_in_mbs          = 512
+function_timeout_in_seconds     = 120
+
+# Alarm -> Function trigger (recommended)
+enable_function_alarm_trigger   = true
+function_alarm_query_override   = ""
+function_alarm_pending_duration = "PT5M"
+
+# Build image automatically from local source during terraform apply.
+enable_function_image_build = true
+function_source_dir         = "function"
+ocir_registry               = "iad.ocir.io"
+ocir_username               = "<namespace>/<user>"
+# ocir_auth_token           = "<auth-token>"

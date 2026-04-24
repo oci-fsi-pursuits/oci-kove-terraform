@@ -29,7 +29,9 @@ data "oci_core_cluster_network_instances" "rdma" {
 }
 
 data "oci_core_instance" "cluster_network_instances" {
-  count = local.use_cluster_network_mode ? length(data.oci_core_cluster_network_instances.rdma[0].instances) : 0
+  # Use the configured memory node count (known during plan) so Terraform can
+  # build the graph without depending on apply-time discovered instance lists.
+  count = local.use_cluster_network_mode ? var.memory_node_count : 0
 
   instance_id = data.oci_core_cluster_network_instances.rdma[0].instances[count.index]["id"]
 }

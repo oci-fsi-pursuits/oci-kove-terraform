@@ -1,5 +1,5 @@
 module "rdma_platform" {
-  source = "../../modules/rdma-platform"
+  source = "../../modules/compute-cluster"
 
   tenancy_ocid         = var.tenancy_ocid
   region               = var.region
@@ -37,24 +37,34 @@ module "rdma_platform" {
   management_secondary_vnic_subnet_id  = var.management_secondary_vnic_subnet_id
   management_secondary_vnic_private_ip = var.management_secondary_vnic_private_ip
   management_cloud_init_template_path  = var.management_cloud_init_template_path
+  enable_management_instance           = var.enable_management_instance
 
   rhsm_org_id                    = var.rhsm_org_id
   rhsm_activation_key            = var.rhsm_activation_key
   playbooks_zip_url              = var.playbooks_zip_url
   cloud_init_template_extra_vars = var.cloud_init_template_extra_vars
 
-  bm_node_shape                  = var.bm_node_shape
-  rdma_deployment_mode           = var.rdma_deployment_mode
-  bm_node_image_ocid             = var.bm_node_image_ocid
-  bm_boot_volume_size_gbs        = var.bm_boot_volume_size_gbs
-  bm_capacity_reservation_id     = var.bm_capacity_reservation_id
-  bm_generic_platform_config     = var.bm_generic_platform_config
-  bm_smt_enabled                 = var.bm_smt_enabled
-  bm_numa_nodes_per_socket       = var.bm_numa_nodes_per_socket
-  use_compute_agent              = var.use_compute_agent
-  bm_imds_ssh_key_bootstrap      = var.bm_imds_ssh_key_bootstrap
-  cluster_network_create_timeout = var.cluster_network_create_timeout
-  create_bm_console_connections  = var.create_bm_console_connections
+  bm_node_shape                                           = var.bm_node_shape
+  rdma_deployment_mode                                    = var.rdma_deployment_mode
+  bm_node_image_ocid                                      = var.bm_node_image_ocid
+  bm_boot_volume_size_gbs                                 = var.bm_boot_volume_size_gbs
+  bm_capacity_reservation_id                              = var.bm_capacity_reservation_id
+  bm_generic_platform_config                              = var.bm_generic_platform_config
+  bm_smt_enabled                                          = var.bm_smt_enabled
+  bm_numa_nodes_per_socket                                = var.bm_numa_nodes_per_socket
+  use_compute_agent                                       = var.use_compute_agent
+  bm_imds_ssh_key_bootstrap                               = var.bm_imds_ssh_key_bootstrap
+  cluster_network_create_timeout                          = var.cluster_network_create_timeout
+  cluster_network_enable_autoscaling                      = var.cluster_network_enable_autoscaling
+  cluster_network_autoscaling_min_nodes                   = var.cluster_network_autoscaling_min_nodes
+  cluster_network_autoscaling_max_nodes                   = var.cluster_network_autoscaling_max_nodes
+  cluster_network_autoscaling_initial_nodes               = var.cluster_network_autoscaling_initial_nodes
+  cluster_network_autoscaling_cooldown_seconds            = var.cluster_network_autoscaling_cooldown_seconds
+  cluster_network_autoscaling_scale_out_threshold_percent = var.cluster_network_autoscaling_scale_out_threshold_percent
+  cluster_network_autoscaling_scale_in_threshold_percent  = var.cluster_network_autoscaling_scale_in_threshold_percent
+  cluster_network_autoscaling_scale_out_by                = var.cluster_network_autoscaling_scale_out_by
+  cluster_network_autoscaling_scale_in_by                 = var.cluster_network_autoscaling_scale_in_by
+  create_bm_console_connections                           = var.create_bm_console_connections
 
   cluster_placement_group_enabled     = var.cluster_placement_group_enabled
   cluster_placement_group_type        = var.cluster_placement_group_type

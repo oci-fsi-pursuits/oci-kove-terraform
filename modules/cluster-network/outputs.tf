@@ -35,12 +35,12 @@ output "bastion_public_ip" {
 
 output "management_private_ip" {
   description = "Private IP of the management VM."
-  value       = oci_core_instance.management.private_ip
+  value       = var.enable_management_instance ? oci_core_instance.management[0].private_ip : null
 }
 
 output "management_secondary_vnic_id" {
   description = "Secondary VNIC attachment OCID for management node when enabled; null otherwise."
-  value       = var.management_secondary_vnic_enabled ? oci_core_vnic_attachment.management_secondary[0].id : null
+  value       = var.enable_management_instance && var.management_secondary_vnic_enabled ? oci_core_vnic_attachment.management_secondary[0].id : null
 }
 
 output "compute_cluster_id" {
@@ -79,13 +79,13 @@ output "bm_memory_private_ips" {
 }
 
 output "cluster_network_instance_ids" {
-  description = "Cluster-network mode instance IDs discovered from oci_core_cluster_network_instances."
-  value       = local.cluster_network_instance_ids
+  description = "Cluster-network mode memory-pool instance IDs discovered from oci_core_cluster_network_instances."
+  value       = local.cluster_network_memory_instance_ids
 }
 
 output "cluster_network_instance_private_ips" {
-  description = "Cluster-network mode private IPs discovered from oci_core_instance lookups."
-  value       = local.cluster_network_instance_private_ips
+  description = "Cluster-network mode memory-pool private IPs discovered from oci_core_instance lookups."
+  value       = local.cluster_network_memory_private_ips
 }
 
 output "cluster_ssh_private_key_openssh" {
@@ -132,19 +132,4 @@ output "existing_vcns_in_compartment" {
 output "availability_domain_used" {
   description = "AD used for bastion, management VM, compute cluster, and BMs."
   value       = local.cluster_ad
-}
-
-output "memory_autoscale_function_ocid" {
-  description = "Legacy OCI Function OCID output (null in management-timer mode)."
-  value       = null
-}
-
-output "memory_autoscale_schedule_ocid" {
-  description = "Autoscale timer name configured on management node (null when disabled)."
-  value       = var.enable_memory_autoscale ? "rdma-memory-autoscale.timer" : null
-}
-
-output "memory_autoscale_dynamic_group_ocid" {
-  description = "Legacy output; dynamic group is now managed by stig-hardened-builds/rdma-autoscale."
-  value       = null
 }

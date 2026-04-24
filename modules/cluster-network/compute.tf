@@ -291,6 +291,67 @@ resource "oci_core_cluster_network" "rdma" {
   }
 }
 
+resource "oci_autoscaling_auto_scaling_configuration" "cluster_network_pool" {
+  count = local.use_cluster_network_mode && var.cluster_network_enable_autoscaling ? 1 : 0
+
+  compartment_id       = var.compartment_ocid
+  display_name         = "${local.name_prefix}-cluster-network-autoscaling"
+  is_enabled           = true
+  cool_down_in_seconds = var.cluster_network_autoscaling_cooldown_seconds
+  freeform_tags        = local.common_tags
+
+  auto_scaling_resources {
+    id   = oci_core_cluster_network.rdma[0].instance_pools[0].id
+    type = "instancePool"
+  }
+
+  policies {
+    policy_type  = "threshold"
+    display_name = "${local.name_prefix}-cluster-network-threshold"
+    is_enabled   = true
+
+    capacity {
+      initial = var.cluster_network_autoscaling_initial_nodes
+      min     = var.cluster_network_autoscaling_min_nodes
+      max     = var.cluster_network_autoscaling_max_nodes
+    }
+
+    rules {
+      display_name = "scale-out-cpu"
+
+      metric {
+        metric_type = "CPU_UTILIZATION"
+        threshold {
+          operator = "GT"
+          value    = var.cluster_network_autoscaling_scale_out_threshold_percent
+        }
+      }
+
+      action {
+        type  = "CHANGE_COUNT_BY"
+        value = var.cluster_network_autoscaling_scale_out_by
+      }
+    }
+
+    rules {
+      display_name = "scale-in-cpu"
+
+      metric {
+        metric_type = "CPU_UTILIZATION"
+        threshold {
+          operator = "LT"
+          value    = var.cluster_network_autoscaling_scale_in_threshold_percent
+        }
+      }
+
+      action {
+        type  = "CHANGE_COUNT_BY"
+        value = -1 * var.cluster_network_autoscaling_scale_in_by
+      }
+    }
+  }
+}
+
 resource "oci_core_instance_console_connection" "bm_console" {
   count = var.create_bm_console_connections && local.use_compute_cluster_mode ? local.bm_total_count : 0
 

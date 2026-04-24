@@ -201,6 +201,12 @@ variable "management_cloud_init_template_path" {
   default     = ""
 }
 
+variable "enable_management_instance" {
+  type        = bool
+  description = "Create the built-in management VM (kove-*-management). Set false when using a separate MC host as the single management node."
+  default     = true
+}
+
 variable "rhsm_org_id" {
   type        = string
   description = "RHSM organization ID; injected into cloud-init template as rhsm_org_id. Leave empty if unused."
@@ -345,6 +351,60 @@ variable "cluster_network_create_timeout" {
   type        = string
   description = "Per-BM instance create timeout"
   default     = ""
+}
+
+variable "cluster_network_enable_autoscaling" {
+  type        = bool
+  description = "Enable OCI autoscaling configuration for the cluster-network memory instance pool."
+  default     = false
+}
+
+variable "cluster_network_autoscaling_min_nodes" {
+  type        = number
+  description = "Minimum memory nodes for cluster-network autoscaling."
+  default     = 1
+}
+
+variable "cluster_network_autoscaling_max_nodes" {
+  type        = number
+  description = "Maximum memory nodes for cluster-network autoscaling."
+  default     = 8
+}
+
+variable "cluster_network_autoscaling_initial_nodes" {
+  type        = number
+  description = "Initial memory node count used by autoscaling policy capacity block."
+  default     = 2
+}
+
+variable "cluster_network_autoscaling_cooldown_seconds" {
+  type        = number
+  description = "Cooldown period in seconds between autoscaling actions."
+  default     = 300
+}
+
+variable "cluster_network_autoscaling_scale_out_threshold_percent" {
+  type        = number
+  description = "Scale-out threshold (%) for memory-pool CPU utilization."
+  default     = 75
+}
+
+variable "cluster_network_autoscaling_scale_in_threshold_percent" {
+  type        = number
+  description = "Scale-in threshold (%) for memory-pool CPU utilization."
+  default     = 30
+}
+
+variable "cluster_network_autoscaling_scale_out_by" {
+  type        = number
+  description = "Number of memory nodes to add per scale-out action."
+  default     = 1
+}
+
+variable "cluster_network_autoscaling_scale_in_by" {
+  type        = number
+  description = "Number of memory nodes to remove per scale-in action."
+  default     = 1
 }
 
 variable "create_bm_console_connections" {

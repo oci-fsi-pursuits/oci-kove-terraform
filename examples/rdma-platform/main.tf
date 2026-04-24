@@ -1,5 +1,5 @@
 module "rdma_platform" {
-  source = "../../modules/rdma-platform"
+  source = "../../modules/compute-cluster"
 
   tenancy_ocid         = var.tenancy_ocid
   region               = var.region
