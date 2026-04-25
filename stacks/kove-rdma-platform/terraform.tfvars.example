@@ -1,122 +1,88 @@
-# Copy to terraform.tfvars (or use -var-file) and fill in. Do not commit secrets.
-#
-# Sensitive values (RHSM): for Terraform CLI, copy secrets.auto.tfvars.example →
-# secrets.auto.tfvars (Terraform loads *.auto.tfvars). For OCI Resource Manager,
-# set **RHSM organization ID** and **RHSM activation key** in the stack variables UI
-# (same Terraform variables: rhsm_org_id, rhsm_activation_key).
+# Recommended template: existing VCN + cluster_network + bastion + MC host (Frankfurt-style)
+# Copy to terraform.tfvars (or use -var-file) and fill placeholders. Do not commit secrets.
 
-tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-region           = "us-phoenix-1"
-compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+tenancy_ocid     = "ocid1.tenancy.oc1..REPLACE_ME"
+region           = "eu-frankfurt-1"
+compartment_ocid = "ocid1.compartment.oc1..REPLACE_ME"
 
-# Optional: tenancy home region when it differs from `region` (IAM / cross-region cases).
-# identity_home_region = "us-phoenix-1"
+ssh_public_key = <<-EOT
+ssh-rsa REPLACE_ME
+EOT
 
-ssh_public_key = "ssh-ed25519 AAAA...your-key... comment"
-
-# Naming (modules/labels) — display prefix = kove_environment-kove_stack_name with namespace
-kove_namespace   = "kove"
-kove_environment = "dev"
-kove_stack_name  = "rdma"
+kove_namespace    = "kove"
+kove_environment  = "prod"
+kove_stack_name   = "rdma"
+host_label_prefix = "fra"
 
 tags = {
   project = "rdma-platform"
+  env     = "prod"
 }
 
-# New VCN (default): 10.0.1.0/24 public, 10.0.2.0/24 mgmt, 10.0.3.0/24 RDMA
-# use_existing_vcn = false
-# When creating the VCN (oracle-quickstart/oci-hpc style: NAT + service gateway, DHCP VcnLocalPlusInternet):
-# ssh_ingress_cidr = "203.0.113.0/24"
-# public_ingress_hpc_ui_ports = false
+# Example: pILZ:EU-FRANKFURT-1-AD-2
+availability_domain = "REPLACE_ME"
 
-# Or use three existing subnets (+ VCN OCID):
-# use_existing_vcn              = true
-# existing_vcn_id               = "ocid1.vcn.oc1..aaaa"
-# existing_public_subnet_id     = "ocid1.subnet.oc1..aaaa"
-# existing_management_subnet_id = "ocid1.subnet.oc1..aaaa"
-# existing_rdma_subnet_id       = "ocid1.subnet.oc1..aaaa"
+use_existing_vcn              = true
+existing_vcn_id               = "ocid1.vcn.oc1.eu-frankfurt-1.REPLACE_ME"
+existing_public_subnet_id     = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+existing_management_subnet_id = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+existing_rdma_subnet_id       = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# Pin AD if needed (otherwise derived from RDMA subnet, then mgmt, then public, then first tenancy AD):
-# availability_domain = "pILZ:PHX-AD-2"
+# RDMA / BM plane
+bm_node_image_ocid   = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
+rdma_deployment_mode = "cluster_network"
+memory_node_count    = 2
 
-# Bare metal custom image (control + all memory nodes)
-bm_node_image_ocid = "ocid1.image.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+# Cluster-network autoscaling (memory metric)
+cluster_network_enable_autoscaling                      = true
+cluster_network_autoscaling_min_nodes                   = 2
+cluster_network_autoscaling_max_nodes                   = 8
+cluster_network_autoscaling_initial_nodes               = 2
+cluster_network_autoscaling_cooldown_seconds            = 300
+cluster_network_autoscaling_scale_out_threshold_percent = 80
+cluster_network_autoscaling_scale_in_threshold_percent  = 30
+cluster_network_autoscaling_scale_out_by                = 1
+cluster_network_autoscaling_scale_in_by                 = 1
 
-# RDMA placement mode:
-# - compute_cluster: current behavior (individual BM instances in an OCI compute cluster)
-# - cluster_network: OCI cluster network instance pool (supports Terraform-driven resize/autoscale)
-# rdma_deployment_mode = "compute_cluster"
+use_compute_agent              = true
+bm_generic_platform_config     = false
+bm_capacity_reservation_id     = ""
+bm_boot_volume_size_gbs        = 120
+cluster_network_create_timeout = "2h"
+bm_imds_ssh_key_bootstrap      = true
+create_bm_console_connections  = false
 
-# Scale memory nodes (control is always 1). Default 2 → 3 BM instances total.
-memory_node_count = 2
-# Role naming for RDMA plane
-# compute_system_name = "compute-system"
-# xpd_name            = "xpd"
+# Role naming
+compute_system_name = "compute-system"
+xpd_name            = "xpd"
 
-# Bare metal plane (matches Resource Manager group "Bare metal (RDMA plane)")
-# bm_node_shape                  = "BM.Optimized3.36"
-# bm_boot_volume_size_gbs        = 120
-# bm_generic_platform_config     = false
-# bm_smt_enabled                 = true
-# bm_numa_nodes_per_socket       = "NPS1"
-# use_compute_agent              = false
-# bm_imds_ssh_key_bootstrap      = true
-# bm_capacity_reservation_id     = ""
-# cluster_network_create_timeout = "2h"
+# Bastion
+enable_bastion = true
 
-# OCI Cluster Placement Group for BM rack-aware placement (creates before instances via implicit dependency)
-# cluster_placement_group_enabled     = true
-# cluster_placement_group_type        = "STANDARD"
-# cluster_placement_group_name        = ""
-# cluster_placement_group_description = ""
+# MC host (separate instance)
+enable_management_instance  = false
+enable_mc_instance          = true
+mc_shape                    = "VM.Standard3.Flex"
+mc_ocpus                    = 3
+mc_memory_gbs               = 32
+mc_assign_public_ip         = false
+mc_subnet_id                = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# Optional bastion / management shapes (defaults: VM.Standard.E6.Flex, 2 OCPU, 16 GB)
-# enable_bastion = true
-# bastion_shape          = "VM.Standard.E6.Flex"
-# bastion_ocpus          = 2
-# bastion_memory_gbs     = 16
-# bastion_image_ocid     = ""
-# management_shape       = "VM.Standard.E6.Flex"
-# management_ocpus       = 2
-# management_memory_gbs  = 16
-# management_image_ocid  = ""
-# management_secondary_vnic_enabled    = false
-# management_secondary_vnic_subnet_id  = "" # empty => rdma subnet
-# management_secondary_vnic_private_ip = "" # optional static IP
+# Optional secondary VNIC controls
+# mc_secondary_vnic_subnet_id = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+# mc_secondary_vnic_private_ip = "10.0.2.58"
+mc_secondary_vnic_interface = "eth1"
 
-# RHSM for cloud-init (prefer secrets.auto.tfvars for CLI). Resource Manager: use stack variables.
-# rhsm_org_id           = "your-rhsm-org-id"
-# rhsm_activation_key   = "your-activation-key"
-# playbooks_zip_url     = "https://objectstorage.region.oraclecloud.com/.../playbooks.zip"
+# MC deployment mode (recommended)
+mc_deployment_mode   = "custom_image"
+mc_custom_image_ocid = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# Serial console over SSH tunnel (optional)
-# create_bm_console_connections = false
+# Alternate mode (optional advanced path)
+# mc_deployment_mode = "cloud_init_setup"
+# mc_base_image_ocid = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# Optional dedicated MC host VM (separate from RDMA BM plane)
-# enable_mc_instance = true
-# mc_shape               = "VM.Standard3.Flex"
-# mc_ocpus               = 3
-# mc_memory_gbs          = 32
-# mc_boot_volume_size_gbs = 200
-# mc_assign_public_ip    = false
-# mc_subnet_id           = "" # empty => management subnet from this stack
-# mc_availability_domain = "" # empty => same AD resolved by this stack
-#
-# Cloud-init runs in both modes.
-#
-# Option 1: use custom image for host OS baseline
-# mc_deployment_mode     = "custom_image"
-# mc_custom_image_ocid   = "ocid1.image.oc1..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-#
-# Option 2: run KVM host prep by cloud-init, then manually copy OVA and run setup script
-# mc_deployment_mode          = "cloud_init_setup"
-# mc_base_image_ocid          = "" # empty => latest Oracle Linux 8 compatible with mc_shape
-# mc_cloud_init_template_path = ""
-# mc_setup_script_path        = "/opt/kove/setup-kove-mc.sh"
-# mc_guest_vm_name            = "kove-mc"
-# mc_guest_disk_path          = "/var/lib/libvirt/images/kove-mc.qcow2"
-# mc_guest_vcpus              = 2
-# mc_guest_memory_mb          = 8192
-
-# Autoscaling is no longer configured in this stack.
-# Use modules/rdma-autoscale for OCI Function + alarm autoscaling.
+# RHSM values for cloud-init based flows
+# Conditionally required: set both when your image/bootstrap needs RHSM-entitled RHEL repos.
+# If your custom image is already pre-entitled (or doesn't need RHSM), these can stay unset.
+# rhsm_org_id         = "REPLACE_ME"
+# rhsm_activation_key = "REPLACE_ME"

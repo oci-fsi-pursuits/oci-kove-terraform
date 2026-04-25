@@ -3,15 +3,19 @@ region           = "us-phoenix-1"
 compartment_ocid = "ocid1.compartment.oc1..example"
 ssh_public_key   = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC..."
 
-# Required BM image for RDMA control/memory nodes
+# REQUIRED baseline values
+# - BM image is required for RDMA control/memory nodes
+# - Recommended deployment mode is cluster_network
 bm_node_image_ocid = "ocid1.image.oc1.phx.example"
-rdma_deployment_mode = "compute_cluster" # or "cluster_network"
+rdma_deployment_mode = "cluster_network" # recommended; legacy option: "compute_cluster"
 
+# Common working defaults (safe to keep)
 management_shape      = "VM.Standard.E6.Flex"
 management_ocpus      = 2
 management_memory_gbs = 16
-management_image_ocid = "" # optional custom image
+management_image_ocid = "" # optional custom image override
 
+# OPTIONAL / advanced knobs (only set when needed)
 management_secondary_vnic_enabled    = false
 management_secondary_vnic_subnet_id  = "" # optional; defaults to RDMA subnet
 management_secondary_vnic_private_ip = "" # optional static IP
