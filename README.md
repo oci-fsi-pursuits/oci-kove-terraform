@@ -66,6 +66,10 @@ Cloud-init templates in `modules/compute-cluster/cloud_init` and `modules/cluste
 
 ## Quick start
 
+## Frankfurt prod cluster-network MC reference plan
+
+![Frankfurt prod cluster-network MC from plan](output/frankfurt-prod-cluster-network-mc-from-plan.png)
+
 ### Full RDMA stack
 
 1. Open `stacks/kove-rdma-platform/terraform.tfvars.example`.

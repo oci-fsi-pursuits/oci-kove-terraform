@@ -205,10 +205,10 @@ resource "oci_autoscaling_auto_scaling_configuration" "cluster_network_pool" {
     }
 
     rules {
-      display_name = "scale-out-cpu"
+      display_name = "scale-out-memory"
 
       metric {
-        metric_type = "CPU_UTILIZATION"
+        metric_type = "MEMORY_UTILIZATION"
         threshold {
           operator = "GT"
           value    = var.cluster_network_autoscaling_scale_out_threshold_percent
@@ -222,10 +222,10 @@ resource "oci_autoscaling_auto_scaling_configuration" "cluster_network_pool" {
     }
 
     rules {
-      display_name = "scale-in-cpu"
+      display_name = "scale-in-memory"
 
       metric {
-        metric_type = "CPU_UTILIZATION"
+        metric_type = "MEMORY_UTILIZATION"
         threshold {
           operator = "LT"
           value    = var.cluster_network_autoscaling_scale_in_threshold_percent
