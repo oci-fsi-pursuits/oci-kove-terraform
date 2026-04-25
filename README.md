@@ -68,7 +68,7 @@ Cloud-init templates in `modules/compute-cluster/cloud_init` and `modules/cluste
 
 ## Frankfurt prod cluster-network MC reference plan
 
-![Frankfurt prod cluster-network MC from plan](output/frankfurt-prod-cluster-network-mc-from-plan.png)
+![Frankfurt prod cluster-network MC from plan](docs/images/frankfurt-prod-cluster-network-mc-from-plan.png)
 
 ### Full RDMA stack
 
