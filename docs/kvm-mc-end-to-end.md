@@ -65,10 +65,10 @@ sudo mv -f kove-mc.qcow2 /var/lib/libvirt/images/
 sudo restorecon -Rv /var/lib/libvirt/images
 ```
 
-## 5) Ensure default libvirt network exists
+## 5) Ensure default libvirt network exists (static)
 
 ```bash
-cat >/tmp/default-net.xml <<'EOF'
+cat >/tmp/default-net.xml <<EOF
 <network>
   <name>default</name>
   <forward mode='nat'/>
@@ -81,11 +81,42 @@ cat >/tmp/default-net.xml <<'EOF'
 </network>
 EOF
 
+sudo virsh --connect qemu:///system net-destroy default 2>/dev/null || true
+sudo virsh --connect qemu:///system net-undefine default 2>/dev/null || true
 sudo virsh --connect qemu:///system net-define /tmp/default-net.xml 2>/dev/null || true
 sudo virsh --connect qemu:///system net-start default 2>/dev/null || true
 sudo virsh --connect qemu:///system net-autostart default
 sudo virsh --connect qemu:///system net-list --all
 ```
+
+This keeps the libvirt guest NAT network predictable and separate from OCI host subnets (for example `10.0.2.0/24`).
+
+## 5.5) **Create MC host golden image (recommended checkpoint)**
+
+If you need a fresh host image that does **not** carry old guest artifacts, create the OCI custom image **here** (after host prep + static libvirt network, before guest import/build):
+
+- ✅ Include in host image:
+  - KVM/libvirt packages and services
+  - static default libvirt network setup (`192.168.122.0/24`)
+  - host routing / VNIC cloud-init setup
+- ❌ Exclude from host image:
+  - extracted OVA files
+  - converted guest qcow2
+  - existing `kove-mc` libvirt domain/metadata
+
+Before imaging, clean host guest artifacts:
+
+```bash
+sudo virsh --connect qemu:///system destroy kove-mc 2>/dev/null || true
+sudo virsh --connect qemu:///system undefine kove-mc --nvram 2>/dev/null || \
+  sudo virsh --connect qemu:///system undefine kove-mc 2>/dev/null || true
+sudo rm -f /var/lib/libvirt/images/kove-mc.qcow2
+rm -rf ~/ova
+```
+
+Then create the OCI custom image from this MC host.
+
+After launching a new MC host from that image, continue with sections **4 -> 9** to finish guest build and validation.
 
 ## 6) Create KVM domain
 
