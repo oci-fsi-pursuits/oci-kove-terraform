@@ -120,89 +120,28 @@ sudo virsh --connect qemu:///system domifaddr kove-mc
 sudo virsh --connect qemu:///system vncdisplay kove-mc
 ```
 
-## 7) TigerVNC access from Desktop (public MC host)
+## 7) Single-step VNC tunnel (Desktop -> Bastion -> MC)
 
-Check VNC display on MC host:
+Use one SSH command to tunnel VNC through bastion to MC.
 
-```bash
-sudo virsh --connect qemu:///system vncdisplay kove-mc
+PowerShell:
+
+```powershell
+ssh -N -L 5901:127.0.0.1:5900 -o IdentitiesOnly=yes -i "<Private key path on Desktop>" -o 'ProxyCommand=ssh -o IdentitiesOnly=yes -i "<Private key path on Desktop>" opc@<Bastion_IP> ssh -i ~/.ssh/<Private Key to ssh from bastion to MC> -W %h:%p cloud-user@<MC_IP>' cloud-user@<MC_IP>
 ```
 
-If result is `127.0.0.1:0`, remote VNC port is `5900`.
-
-Create SSH tunnel from desktop:
+Git Bash:
 
 ```bash
-ssh -N -L 5901:127.0.0.1:5900 -i <DESKTOP_PRIVATE_KEY_PATH> <MC_HOST_USER>@<MC_HOST_PUBLIC_IP>
+ssh -N -L 5901:127.0.0.1:5900 \
+  -o IdentitiesOnly=yes \
+  -i "<private_key_path_on_desktop>" \
+  -o 'ProxyCommand=ssh -o IdentitiesOnly=yes -i "<private_key_path_on_desktop>" opc@<bastion_ip> ssh -i ~/.ssh/<private_key_on_bastion_for_mc> -W %h:%p cloud-user@<mc_ip>' \
+  cloud-user@<mc_ip>
 ```
 
-Then open TigerVNC to:
+Then open VNC Viewer to:
 
 ```text
 127.0.0.1:5901
-```
-
-If `vncdisplay` shows `127.0.0.1:1`, use host port `5901` in the tunnel.
-
-## 8) Optional: install noVNC on bastion (browser-based console)
-
-Use this only if you want browser access instead of TigerVNC client.
-
-On bastion:
-
-```bash
-sudo dnf -y install python3 git
-cd /opt
-sudo git clone https://github.com/novnc/noVNC.git /opt/noVNC
-sudo git clone https://github.com/novnc/websockify.git /opt/noVNC/utils/websockify
-```
-
-Create tunnel from bastion to MC host VNC:
-
-```bash
-ssh -N -L 15900:127.0.0.1:5900 -i ~/.ssh/<MC_HOST_KEY_NAME> <MC_HOST_USER>@<MC_HOST_PRIVATE_IP>
-```
-
-Start noVNC on bastion:
-
-```bash
-/opt/noVNC/utils/novnc_proxy --listen 6080 --vnc 127.0.0.1:15900
-```
-
-From desktop, tunnel to bastion:
-
-```bash
-ssh -N -L 6080:127.0.0.1:6080 -i <DESKTOP_PRIVATE_KEY_PATH> <BASTION_USER>@<BASTION_PUBLIC_IP>
-```
-
-Open browser:
-
-```text
-http://127.0.0.1:6080/vnc.html
-```
-
-## 9) Optional: web UI tunnel instead of VNC
-
-Get guest IP:
-
-```bash
-sudo virsh --connect qemu:///system domifaddr kove-mc
-```
-
-From bastion to MC host:
-
-```bash
-ssh -N -L 8443:<GUEST_IP>:443 -i ~/.ssh/<MC_HOST_KEY_NAME> <MC_HOST_USER>@<MC_HOST_PRIVATE_IP>
-```
-
-From desktop to bastion:
-
-```bash
-ssh -N -L 8443:127.0.0.1:8443 -i <DESKTOP_PRIVATE_KEY_PATH> <BASTION_USER>@<BASTION_PUBLIC_IP>
-```
-
-Open browser:
-
-```text
-https://127.0.0.1:8443
 ```

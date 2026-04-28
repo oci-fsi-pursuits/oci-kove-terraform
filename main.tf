@@ -1,5 +1,5 @@
 module "rdma_platform" {
-  source = "../../modules/xpd-cluster"
+  source = "./modules/xpd-cluster"
 
   tenancy_ocid         = var.tenancy_ocid
   region               = var.region
@@ -80,7 +80,7 @@ module "rdma_platform" {
 
 module "mc_instance" {
   count  = var.enable_mc_instance ? 1 : 0
-  source = "../../modules/mc-instance"
+  source = "./modules/mc-instance"
 
   tenancy_ocid        = var.tenancy_ocid
   compartment_ocid    = var.compartment_ocid

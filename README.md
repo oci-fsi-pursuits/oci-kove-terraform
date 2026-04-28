@@ -19,12 +19,12 @@ Management and bastion shapes can be configured as flex VMs, and custom image OC
 | Option | Path | Notes |
 |---|---|---|
 | Networking only | `modules/networking` | Creates VCN, subnets, routes, gateways, and security lists only. |
-| Full RDMA platform | `stacks/kove-rdma-platform` using `modules/xpd-cluster` | Deploys bastion (optional), management VM, and RDMA nodes. |
+| Full RDMA platform | Root module (`main.tf`) using `modules/xpd-cluster` | Deploys bastion (optional), management VM, and RDMA nodes. |
 | OKE deployment | `modules/oke` | Cloud-native OKE cluster path, separate from bare-metal RDMA node deployment. |
 
 ## RDMA deployment modes
 
-In `modules/xpd-cluster` and `stacks/kove-rdma-platform`:
+In `modules/xpd-cluster` and the root deployment module:
 
 - `rdma_deployment_mode = "compute_cluster"` (default)
   - Creates a compute cluster.
@@ -50,7 +50,6 @@ Cloud-init templates in `modules/xpd-cluster/cloud_init` are used to:
 | Path | Purpose |
 |---|---|
 | `modules/` | Reusable Terraform modules (`labels`, `networking`, `oke`, `xpd-cluster`, `mc-instance`). |
-| `stacks/` | Opinionated deployment wrappers for OCI Resource Manager. |
 | `docs/` | Internal project documents such as QA tracking logs. |
 
 ## Quick start
@@ -61,7 +60,7 @@ Cloud-init templates in `modules/xpd-cluster/cloud_init` are used to:
 
 ### Full RDMA stack
 
-1. Open `stacks/kove-rdma-platform/terraform.tfvars.example`.
+1. Open `terraform.tfvars.example`.
 2. Copy to `terraform.tfvars` and set required values.
 3. Deploy:
 

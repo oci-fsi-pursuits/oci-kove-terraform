@@ -13,6 +13,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+.terraformrc.local
 
 # Secrets
 secrets.auto.tfvars
@@ -27,3 +28,5 @@ docs/qa-progress-log.md
 examples/
 modules/compute-cluster/
 modules/xpd-cluster/README_ALIAS.md
+output/
+modules/oke/
