@@ -20,16 +20,6 @@ write_files:
       RDMA_USE_OCA_PLUGIN=${jsonencode(rdma_use_oca_plugin)}
       COMPARTMENT_OCID=${jsonencode(compartment_ocid)}
       RDMA_IFACE=${jsonencode(rdma_interface)}
-      ENABLE_MEMORY_AUTOSCALE=${jsonencode(enable_memory_autoscale)}
-      MEMORY_SCALE_THRESHOLD_PERCENT=${jsonencode(memory_scale_threshold_percent)}
-      MEMORY_SCALE_WINDOW_MINUTES=${jsonencode(memory_scale_window_minutes)}
-      MEMORY_SCALE_COOLDOWN_MINUTES=${jsonencode(memory_scale_cooldown_minutes)}
-      MEMORY_NODE_MAX_COUNT=${jsonencode(memory_node_max_count)}
-      MEMORY_AUTOSCALE_CHECK_INTERVAL_MINUTES=${jsonencode(memory_autoscale_check_interval_minutes)}
-      RESOURCE_MANAGER_STACK_ID=${jsonencode(resource_manager_stack_id)}
-      RESOURCE_MANAGER_STACK_COMPARTMENT=${jsonencode(resource_manager_stack_compartment)}
-      RESOURCE_MANAGER_REGION=${jsonencode(resource_manager_region)}
-      MEMORY_AUTOSCALE_DRY_RUN=${jsonencode(memory_autoscale_dry_run)}
       PLAYBOOKS_ZIP_URL=${jsonencode(playbooks_zip_url)}
 
       TOKEN_URL="http://169.254.169.254/opc/v2/instance/refreshtoken"
@@ -66,19 +56,6 @@ write_files:
           fi
         fi
         printf "%s" "$keys"
-      }
-
-      ensure_oci_cli() {
-        command -v oci >/dev/null 2>&1 && return 0
-        if command -v dnf >/dev/null 2>&1; then
-          dnf -y install oci-cli || true
-        elif command -v yum >/dev/null 2>&1; then
-          yum -y install oci-cli || true
-        fi
-        command -v oci >/dev/null 2>&1 && return 0
-        if command -v curl >/dev/null 2>&1; then
-          bash -c "$(curl -fsSL https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults --install-dir /opt/oci-cli --exec-dir /usr/local/bin || true
-        fi
       }
 
       if ! id "$${USER_NAME}" >/dev/null 2>&1; then
@@ -129,127 +106,6 @@ write_files:
       if [[ -f /opt/oci-hpc-ansible/configure-rhel-rdma.yml ]]; then
         ansible-playbook -i "localhost," -c local /opt/oci-hpc-ansible/configure-rhel-rdma.yml -e "rdma_interface=$${RDMA_IFACE}" || true
       fi
-
-      if [[ "$${NODE_ROLE}" == "management" && "$${ENABLE_MEMORY_AUTOSCALE}" == "true" ]]; then
-        ensure_oci_cli || true
-        cat >/usr/local/bin/rdma-memory-autoscale.sh <<'EOF'
-      #!/usr/bin/env bash
-      set -euo pipefail
-      exec >>/var/log/rdma-memory-autoscale.log 2>&1
-      export PYTHONWARNINGS=ignore
-
-      COMPARTMENT_OCID="$${COMPARTMENT_OCID:-}"
-      STACK_ID="$${RESOURCE_MANAGER_STACK_ID:-}"
-      STACK_COMPARTMENT="$${RESOURCE_MANAGER_STACK_COMPARTMENT:-$${COMPARTMENT_OCID}}"
-      RM_REGION="$${RESOURCE_MANAGER_REGION:-}"
-      THRESHOLD="$${MEMORY_SCALE_THRESHOLD_PERCENT:-80}"
-      WINDOW_MIN="$${MEMORY_SCALE_WINDOW_MINUTES:-5}"
-      COOLDOWN_MIN="$${MEMORY_SCALE_COOLDOWN_MINUTES:-20}"
-      MAX_COUNT="$${MEMORY_NODE_MAX_COUNT:-8}"
-      DRY_RUN="$${MEMORY_AUTOSCALE_DRY_RUN:-false}"
-      NOW_EPOCH="$(date -u +%s)"
-      OCI_BIN="$(command -v oci || true)"
-      [[ -z "$${OCI_BIN}" && -x /usr/local/bin/oci ]] && OCI_BIN="/usr/local/bin/oci"
-      [[ -z "$${STACK_ID}" || -z "$${RM_REGION}" || -z "$${OCI_BIN}" ]] && exit 0
-      echo "[$$(date -u +"%Y-%m-%dT%H:%M:%SZ")] autoscale check start stack=$${STACK_ID} region=$${RM_REGION}"
-
-      mapfile -t MEMORY_INSTANCE_IDS < <("$${OCI_BIN}" compute instance list --compartment-id "$${COMPARTMENT_OCID}" --all --auth instance_principal | jq -r '.data[] | select(."lifecycle-state" == "RUNNING") | select(."freeform-tags".node_pool == "rdma-memory") | select(."freeform-tags".node_role == "memory") | .id')
-      CURRENT_COUNT="$${#MEMORY_INSTANCE_IDS[@]}"
-      echo "memory nodes found: $${CURRENT_COUNT}"
-      (( CURRENT_COUNT == 0 )) && exit 0
-      (( CURRENT_COUNT >= MAX_COUNT )) && exit 0
-
-      ACTIVE_COUNT="$("$${OCI_BIN}" resource-manager job list --region "$${RM_REGION}" --stack-id "$${STACK_ID}" --compartment-id "$${STACK_COMPARTMENT}" --all --auth instance_principal | jq '[.data[] | select(."lifecycle-state"=="ACCEPTED" or ."lifecycle-state"=="IN_PROGRESS" or ."lifecycle-state"=="CANCELING")] | length')"
-      echo "active RM jobs: $${ACTIVE_COUNT}"
-      (( ACTIVE_COUNT > 0 )) && exit 0
-
-      LAST_FINISHED="$("$${OCI_BIN}" resource-manager job list --region "$${RM_REGION}" --stack-id "$${STACK_ID}" --compartment-id "$${STACK_COMPARTMENT}" --all --auth instance_principal | jq -r '[.data[] | select(.operation=="APPLY" and ."lifecycle-state"=="SUCCEEDED") | ."time-finished"] | sort | last // empty')"
-      if [[ -n "$${LAST_FINISHED}" ]]; then
-        LAST_EPOCH="$(date -u -d "$${LAST_FINISHED}" +%s 2>/dev/null || true)"
-        if [[ -n "$${LAST_EPOCH}" ]]; then
-          AGE_MIN="$(( (NOW_EPOCH - LAST_EPOCH) / 60 ))"
-          (( AGE_MIN < COOLDOWN_MIN )) && exit 0
-        fi
-      fi
-
-      START_TIME="$(date -u -d "-$${WINDOW_MIN} minutes" +"%Y-%m-%dT%H:%M:%SZ")"
-      END_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-      ALL_OVER=true
-      for INSTANCE_ID in "$${MEMORY_INSTANCE_IDS[@]}"; do
-        VALUE="$("$${OCI_BIN}" monitoring metric-data summarize-metrics-data --compartment-id "$${COMPARTMENT_OCID}" --namespace "oci_computeagent" --query-text "MemoryUtilization[$${WINDOW_MIN}m]{resourceId = \"$${INSTANCE_ID}\"}.mean()" --start-time "$${START_TIME}" --end-time "$${END_TIME}" --auth instance_principal | jq -r '.data[0]."aggregated-datapoints" | sort_by(.timestamp) | last | .value // empty')"
-        [[ -z "$${VALUE}" ]] && { echo "no metric for $${INSTANCE_ID}"; ALL_OVER=false; break; }
-        if ! awk "BEGIN { exit !($${VALUE} > $${THRESHOLD}) }"; then
-          echo "threshold not met for $${INSTANCE_ID}: $${VALUE} <= $${THRESHOLD}"
-          ALL_OVER=false
-          break
-        fi
-      done
-      [[ "$${ALL_OVER}" != "true" ]] && exit 0
-
-      NEXT_COUNT="$((CURRENT_COUNT + 1))"
-      (( NEXT_COUNT > MAX_COUNT )) && exit 0
-      [[ "$${DRY_RUN}" == "true" ]] && exit 0
-      echo "triggering RM apply with memory_node_count=$${NEXT_COUNT}"
-      JOB_JSON="/tmp/rdma-autoscale-apply.json"
-      cat >"$${JOB_JSON}" <<JSON
-      {
-        "jobOperationDetails": {
-          "isProviderUpgradeRequired": false,
-          "variables": {
-            "memory_node_count": "$${NEXT_COUNT}"
-          }
-        }
-      }
-      JSON
-      "$${OCI_BIN}" resource-manager job create-apply-job \
-        --region "$${RM_REGION}" \
-        --stack-id "$${STACK_ID}" \
-        --display-name "rdma-memory-autoscale-$(date -u +"%Y%m%d%H%M%S")" \
-        --execution-plan-strategy AUTO_APPROVED \
-        --job-operation-details-is-provider-upgrade-required false \
-        --from-json "file://$${JOB_JSON}" \
-        --auth instance_principal
-      EOF
-        chmod 755 /usr/local/bin/rdma-memory-autoscale.sh
-        cat >/etc/systemd/system/rdma-memory-autoscale.service <<EOF
-      [Unit]
-      Description=RDMA memory autoscale check
-
-      [Service]
-      Type=oneshot
-      Environment=PATH=/usr/local/bin:/usr/bin:/usr/sbin:/bin
-      Environment=COMPARTMENT_OCID=$${COMPARTMENT_OCID}
-      Environment=RESOURCE_MANAGER_STACK_ID=$${RESOURCE_MANAGER_STACK_ID}
-      Environment=RESOURCE_MANAGER_STACK_COMPARTMENT=$${RESOURCE_MANAGER_STACK_COMPARTMENT}
-      Environment=RESOURCE_MANAGER_REGION=$${RESOURCE_MANAGER_REGION}
-      Environment=MEMORY_SCALE_THRESHOLD_PERCENT=$${MEMORY_SCALE_THRESHOLD_PERCENT}
-      Environment=MEMORY_SCALE_WINDOW_MINUTES=$${MEMORY_SCALE_WINDOW_MINUTES}
-      Environment=MEMORY_SCALE_COOLDOWN_MINUTES=$${MEMORY_SCALE_COOLDOWN_MINUTES}
-      Environment=MEMORY_NODE_MAX_COUNT=$${MEMORY_NODE_MAX_COUNT}
-      Environment=MEMORY_AUTOSCALE_DRY_RUN=$${MEMORY_AUTOSCALE_DRY_RUN}
-      ExecStart=/usr/local/bin/rdma-memory-autoscale.sh
-      EOF
-        cat >/etc/systemd/system/rdma-memory-autoscale.timer <<EOF
-      [Unit]
-      Description=Run RDMA memory autoscale checks
-
-      [Timer]
-      OnBootSec=2min
-      OnUnitActiveSec=$${MEMORY_AUTOSCALE_CHECK_INTERVAL_MINUTES}min
-      Unit=rdma-memory-autoscale.service
-
-      [Install]
-      WantedBy=timers.target
-      EOF
-        systemctl unmask rdma-memory-autoscale.service rdma-memory-autoscale.timer || true
-        systemctl daemon-reload || true
-        systemctl enable --now rdma-memory-autoscale.timer || true
-        /usr/local/bin/rdma-memory-autoscale.sh || true
-      fi
-
-      echo "$${USER_NAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-cloud-user
-      chmod 440 /etc/sudoers.d/90-cloud-user
-      visudo -cf /etc/sudoers
 
 runcmd:
   - /usr/local/sbin/runtime-guardrail.sh

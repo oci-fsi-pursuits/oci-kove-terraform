@@ -1,5 +1,5 @@
 module "rdma_platform" {
-  source = "../../modules/compute-cluster"
+  source = "../../modules/xpd-cluster"
 
   tenancy_ocid         = var.tenancy_ocid
   region               = var.region
@@ -93,9 +93,13 @@ module "mc_instance" {
   kove_stack_name  = var.kove_stack_name
   tags             = var.tags
 
-  instance_name_suffix = var.mc_instance_name_suffix
-  hostname_label       = var.mc_hostname_label
-  assign_public_ip     = var.mc_assign_public_ip
+  instance_name_suffix      = var.mc_instance_name_suffix
+  hostname_label            = var.mc_hostname_label
+  assign_public_ip          = var.mc_assign_public_ip
+  secondary_vnic_enabled    = var.mc_secondary_vnic_enabled
+  secondary_vnic_subnet_id  = trimspace(var.mc_secondary_vnic_subnet_id) != "" ? trimspace(var.mc_secondary_vnic_subnet_id) : (trimspace(var.mc_subnet_id) != "" ? trimspace(var.mc_subnet_id) : module.rdma_platform.management_subnet_ocid)
+  secondary_vnic_private_ip = var.mc_secondary_vnic_private_ip
+  secondary_vnic_interface  = var.mc_secondary_vnic_interface
 
   shape                = var.mc_shape
   ocpus                = var.mc_ocpus

@@ -1,0 +1,227 @@
+{
+  "title": "Kove RDMA Platform - Cluster Network with Bastion",
+  "pages": [
+    {
+      "name": "Physical - Cluster Network with Bastion",
+      "page_type": "physical",
+      "width": 1600,
+      "height": 900,
+      "elements": [
+        {
+          "id": "internet",
+          "query": "internet",
+          "x": 20,
+          "y": 320,
+          "w": 220,
+          "h": 160
+        },
+        {
+          "id": "region",
+          "query": "region",
+          "x": 275,
+          "y": 50,
+          "w": 1290,
+          "h": 800,
+          "value": "<b>OCI Region</b><br/>Single AD deployment"
+        },
+        {
+          "id": "vcn",
+          "query": "VCN",
+          "parent": "region",
+          "x": 75,
+          "y": 90,
+          "w": 1090,
+          "h": 650,
+          "value": "<b>Kove RDMA VCN</b><br/>10.0.0.0/16"
+        },
+        {
+          "id": "public-subnet",
+          "query": "subnet",
+          "parent": "vcn",
+          "x": 40,
+          "y": 70,
+          "w": 1010,
+          "h": 135,
+          "value": "<b>Public Subnet</b><br/>10.0.1.0/24"
+        },
+        {
+          "id": "management-subnet",
+          "query": "subnet",
+          "parent": "vcn",
+          "x": 40,
+          "y": 245,
+          "w": 1010,
+          "h": 170,
+          "value": "<b>Private Management Subnet</b><br/>10.0.2.0/24"
+        },
+        {
+          "id": "rdma-subnet",
+          "query": "subnet",
+          "parent": "vcn",
+          "x": 40,
+          "y": 455,
+          "w": 1010,
+          "h": 170,
+          "value": "<b>Private RDMA Subnet</b><br/>10.0.3.0/24"
+        },
+        {
+          "id": "public-rt-sl",
+          "query": "route table and security list",
+          "label": "RT + SL",
+          "parent": "vcn",
+          "boundary_parent": "public-subnet",
+          "boundary_side": "top",
+          "x": 860,
+          "w": 100,
+          "h": 52
+        },
+        {
+          "id": "management-rt-sl",
+          "query": "route table and security list",
+          "label": "RT + SL",
+          "parent": "vcn",
+          "boundary_parent": "management-subnet",
+          "boundary_side": "top",
+          "x": 860,
+          "w": 100,
+          "h": 52
+        },
+        {
+          "id": "rdma-rt-sl",
+          "query": "route table and security list",
+          "label": "RT + SL",
+          "parent": "vcn",
+          "boundary_parent": "rdma-subnet",
+          "boundary_side": "top",
+          "x": 860,
+          "w": 100,
+          "h": 52
+        },
+        {
+          "id": "igw",
+          "query": "internet gateway",
+          "parent": "region",
+          "boundary_parent": "vcn",
+          "boundary_side": "right",
+          "boundary_align_to": "public-subnet",
+          "w": 95,
+          "h": 78
+        },
+        {
+          "id": "nat",
+          "query": "nat gateway",
+          "parent": "region",
+          "boundary_parent": "vcn",
+          "boundary_side": "right",
+          "boundary_align_to": "management-subnet",
+          "w": 95,
+          "h": 78
+        },
+        {
+          "id": "service-gateway",
+          "query": "service gateway",
+          "parent": "region",
+          "boundary_parent": "vcn",
+          "boundary_side": "right",
+          "boundary_align_to": "rdma-subnet",
+          "w": 95,
+          "h": 78
+        },
+        {
+          "id": "bastion",
+          "query": "bastion",
+          "parent": "public-subnet",
+          "x": 190,
+          "y": 18,
+          "w": 145,
+          "h": 95,
+          "external_label": "Bastion VM\n(Public IP)"
+        },
+        {
+          "id": "management-vm",
+          "query": "virtual machine",
+          "parent": "management-subnet",
+          "x": 190,
+          "y": 30,
+          "w": 145,
+          "h": 100,
+          "external_label": "Management VM"
+        },
+        {
+          "id": "control-vm",
+          "query": "virtual machine",
+          "parent": "rdma-subnet",
+          "x": 190,
+          "y": 30,
+          "w": 145,
+          "h": 100,
+          "external_label": "Control Node"
+        },
+        {
+          "id": "cluster-network-pool",
+          "query": "instance pools",
+          "parent": "rdma-subnet",
+          "x": 470,
+          "y": 25,
+          "w": 215,
+          "h": 110,
+          "external_label": "Cluster Network\nMemory Node Pool"
+        },
+        {
+          "type": "edge",
+          "source": "internet",
+          "target": "bastion",
+          "label": "SSH",
+          "source_anchor": "right",
+          "target_anchor": "left",
+          "semantic": "request"
+        },
+        {
+          "type": "edge",
+          "source": "bastion",
+          "target": "management-vm",
+          "label": "Admin SSH",
+          "source_anchor": "bottom",
+          "target_anchor": "top",
+          "semantic": "request"
+        },
+        {
+          "type": "edge",
+          "source": "management-vm",
+          "target": "control-vm",
+          "label": "Orchestration",
+          "source_anchor": "bottom",
+          "target_anchor": "top",
+          "semantic": "request"
+        },
+        {
+          "type": "edge",
+          "source": "control-vm",
+          "target": "cluster-network-pool",
+          "label": "RDMA Control/Data",
+          "source_anchor": "right",
+          "target_anchor": "left",
+          "semantic": "request"
+        },
+        {
+          "type": "edge",
+          "source": "management-vm",
+          "target": "nat",
+          "label": "Outbound Updates",
+          "source_anchor": "right",
+          "target_anchor": "left",
+          "semantic": "request"
+        },
+        {
+          "type": "edge",
+          "source": "cluster-network-pool",
+          "target": "service-gateway",
+          "label": "OCI Service Access",
+          "source_anchor": "right",
+          "target_anchor": "left",
+          "semantic": "read"
+        }
+      ]
+    }
+  ]
+}

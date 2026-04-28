@@ -66,6 +66,30 @@ variable "assign_public_ip" {
   default     = false
 }
 
+variable "secondary_vnic_enabled" {
+  type        = bool
+  description = "Attach a secondary VNIC to the MC host."
+  default     = false
+}
+
+variable "secondary_vnic_subnet_id" {
+  type        = string
+  description = "Subnet OCID for MC host secondary VNIC when secondary_vnic_enabled is true."
+  default     = ""
+}
+
+variable "secondary_vnic_private_ip" {
+  type        = string
+  description = "Optional fixed private IP for MC host secondary VNIC. Empty = auto-assign."
+  default     = ""
+}
+
+variable "secondary_vnic_interface" {
+  type        = string
+  description = "Expected Linux interface name for the secondary VNIC used in cloud-init policy routing."
+  default     = "eth1"
+}
+
 variable "shape" {
   type        = string
   description = "MC host shape."

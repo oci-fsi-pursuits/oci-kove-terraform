@@ -125,6 +125,24 @@ resource "oci_core_security_list" "public" {
     }
   }
 
+  ingress_security_rules {
+    protocol = "6"
+    source   = var.ssh_ingress_cidr
+    tcp_options {
+      min = 443
+      max = 443
+    }
+  }
+
+  ingress_security_rules {
+    protocol = "6"
+    source   = var.ssh_ingress_cidr
+    tcp_options {
+      min = 8443
+      max = 8443
+    }
+  }
+
   dynamic "ingress_security_rules" {
     for_each = var.public_ingress_hpc_ui_ports ? [3000, 5000] : []
     content {

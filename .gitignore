@@ -19,3 +19,11 @@ secrets.auto.tfvars
 *.pem
 .env
 .env.*
+
+# Internal QA/logging notes
+docs/qa-progress-log.md
+
+# Archived/removed content
+examples/
+modules/compute-cluster/
+modules/xpd-cluster/README_ALIAS.md

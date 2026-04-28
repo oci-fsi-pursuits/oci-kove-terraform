@@ -1,0 +1,563 @@
+{
+  "title": "Frankfurt Prod Cluster Network + MC Host (From Terraform Plan)",
+  "pages": [
+    {
+      "page": "Physical - Frankfurt Prod Cluster Network",
+      "elements": [
+        {
+          "id": "internet",
+          "parent": null,
+          "bbox": {
+            "x": 40.0,
+            "y": 220.0,
+            "w": 210.0,
+            "h": 155.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "internet",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Physical - Location - Internet",
+            "category": "Physical",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide27",
+            "confidence": 1.0,
+            "reason": "Mapped the query to the page-specific Oracle PowerPoint grouping for physical diagrams."
+          },
+          "category": "Physical",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "region",
+          "parent": null,
+          "bbox": {
+            "x": 260.0,
+            "y": 48.0,
+            "w": 1300.0,
+            "h": 800.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "region",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Physical - Grouping - OCI Region",
+            "category": "Physical",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide27",
+            "confidence": 1.0,
+            "reason": "Mapped the query to the page-specific Oracle PowerPoint grouping for physical diagrams."
+          },
+          "category": "Physical",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "vcn",
+          "parent": "region",
+          "bbox": {
+            "x": 330.0,
+            "y": 138.0,
+            "w": 1110.0,
+            "h": 650.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "VCN",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Physical - Grouping - VCN",
+            "category": "Physical",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide27",
+            "confidence": 1.0,
+            "reason": "Mapped the query to the page-specific Oracle PowerPoint grouping for physical diagrams."
+          },
+          "category": "Physical",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "public-subnet",
+          "parent": "vcn",
+          "bbox": {
+            "x": 370.0,
+            "y": 208.0,
+            "w": 1030.0,
+            "h": 135.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "subnet",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Physical - Grouping - Subnet",
+            "category": "Physical",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide27",
+            "confidence": 1.0,
+            "reason": "Mapped the query to the page-specific Oracle PowerPoint grouping for physical diagrams."
+          },
+          "category": "Physical",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "management-subnet",
+          "parent": "vcn",
+          "bbox": {
+            "x": 370.0,
+            "y": 383.0,
+            "w": 1030.0,
+            "h": 170.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "subnet",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Physical - Grouping - Subnet",
+            "category": "Physical",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide27",
+            "confidence": 1.0,
+            "reason": "Mapped the query to the page-specific Oracle PowerPoint grouping for physical diagrams."
+          },
+          "category": "Physical",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "rdma-subnet",
+          "parent": "vcn",
+          "bbox": {
+            "x": 370.0,
+            "y": 593.0,
+            "w": 1030.0,
+            "h": 170.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "subnet",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Physical - Grouping - Subnet",
+            "category": "Physical",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide27",
+            "confidence": 1.0,
+            "reason": "Mapped the query to the page-specific Oracle PowerPoint grouping for physical diagrams."
+          },
+          "category": "Physical",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "public-rt-sl",
+          "parent": "vcn",
+          "bbox": {
+            "x": 1245.0,
+            "y": 182.0,
+            "w": 95.0,
+            "h": 52.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "route table and security list",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Networking - Route Table and Security List",
+            "category": "Networking",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide36",
+            "confidence": 1.0,
+            "reason": "Mapped the query through a trusted alias: route table and security list."
+          },
+          "category": "Networking",
+          "boundary_parent": "public-subnet",
+          "boundary_side": "top"
+        },
+        {
+          "id": "management-rt-sl",
+          "parent": "vcn",
+          "bbox": {
+            "x": 1245.0,
+            "y": 357.0,
+            "w": 95.0,
+            "h": 52.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "route table and security list",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Networking - Route Table and Security List",
+            "category": "Networking",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide36",
+            "confidence": 1.0,
+            "reason": "Mapped the query through a trusted alias: route table and security list."
+          },
+          "category": "Networking",
+          "boundary_parent": "management-subnet",
+          "boundary_side": "top"
+        },
+        {
+          "id": "rdma-rt-sl",
+          "parent": "vcn",
+          "bbox": {
+            "x": 1245.0,
+            "y": 567.0,
+            "w": 95.0,
+            "h": 52.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "route table and security list",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Networking - Route Table and Security List",
+            "category": "Networking",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide36",
+            "confidence": 1.0,
+            "reason": "Mapped the query through a trusted alias: route table and security list."
+          },
+          "category": "Networking",
+          "boundary_parent": "rdma-subnet",
+          "boundary_side": "top"
+        },
+        {
+          "id": "bastion",
+          "parent": "public-subnet",
+          "bbox": {
+            "x": 550.0,
+            "y": 225.0,
+            "w": 150.0,
+            "h": 95.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "bastion",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Identity and Security - Bastion",
+            "category": "Identity and Security",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide40",
+            "confidence": 1.0,
+            "reason": "Mapped the query through a trusted alias: bastion."
+          },
+          "category": "Identity and Security",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "mc-host",
+          "parent": "management-subnet",
+          "bbox": {
+            "x": 550.0,
+            "y": 413.0,
+            "w": 150.0,
+            "h": 100.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "virtual machine",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Compute - Virtual Machine",
+            "category": "Compute",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide34",
+            "confidence": 1.0,
+            "reason": "Mapped the query through a trusted alias: virtual machine."
+          },
+          "category": "Compute",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "control-node",
+          "parent": "rdma-subnet",
+          "bbox": {
+            "x": 550.0,
+            "y": 623.0,
+            "w": 150.0,
+            "h": 100.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "virtual machine",
+            "page": "physical",
+            "resolution": "alias",
+            "icon_title": "Compute - Virtual Machine",
+            "category": "Compute",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide34",
+            "confidence": 1.0,
+            "reason": "Mapped the query through a trusted alias: virtual machine."
+          },
+          "category": "Compute",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "cluster-network-pool",
+          "parent": "rdma-subnet",
+          "bbox": {
+            "x": 830.0,
+            "y": 617.0,
+            "w": 220.0,
+            "h": 110.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "instance pools",
+            "page": "physical",
+            "resolution": "direct",
+            "icon_title": "Compute - Instance Pools",
+            "category": "Compute",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide34",
+            "confidence": 1.0,
+            "reason": "Matched the query directly to an official PowerPoint icon title, name, or acronym."
+          },
+          "category": "Compute",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": "autoscaling",
+          "parent": "rdma-subnet",
+          "bbox": {
+            "x": 1130.0,
+            "y": 623.0,
+            "w": 150.0,
+            "h": 100.0
+          },
+          "kind": "library",
+          "visible": true,
+          "resolution": {
+            "query": "compute autoscaling",
+            "page": "physical",
+            "resolution": "direct",
+            "icon_title": "Compute - Autoscaling",
+            "category": "Compute",
+            "source": "oracle-oci-architecture-toolkit-v24.1.pptx:slide34",
+            "confidence": 1.0,
+            "reason": "Matched the query directly to an official PowerPoint icon title, name, or acronym."
+          },
+          "category": "Compute",
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": null,
+          "parent": null,
+          "bbox": {
+            "x": 980.0,
+            "y": 230.0,
+            "w": 250.0,
+            "h": 42.0
+          },
+          "kind": "text",
+          "visible": true,
+          "resolution": null,
+          "category": null,
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": null,
+          "parent": null,
+          "bbox": {
+            "x": 40.0,
+            "y": 48.0,
+            "w": 108,
+            "h": 108.0
+          },
+          "kind": "edge",
+          "visible": true,
+          "resolution": null,
+          "category": null,
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": null,
+          "parent": null,
+          "bbox": {
+            "x": 40.0,
+            "y": 48.0,
+            "w": 108,
+            "h": 108.0
+          },
+          "kind": "edge",
+          "visible": true,
+          "resolution": null,
+          "category": null,
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": null,
+          "parent": null,
+          "bbox": {
+            "x": 40.0,
+            "y": 48.0,
+            "w": 108,
+            "h": 108.0
+          },
+          "kind": "edge",
+          "visible": true,
+          "resolution": null,
+          "category": null,
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": null,
+          "parent": null,
+          "bbox": {
+            "x": 40.0,
+            "y": 48.0,
+            "w": 108,
+            "h": 108.0
+          },
+          "kind": "edge",
+          "visible": true,
+          "resolution": null,
+          "category": null,
+          "boundary_parent": null,
+          "boundary_side": null
+        },
+        {
+          "id": null,
+          "parent": null,
+          "bbox": {
+            "x": 40.0,
+            "y": 48.0,
+            "w": 108,
+            "h": 108.0
+          },
+          "kind": "edge",
+          "visible": true,
+          "resolution": null,
+          "category": null,
+          "boundary_parent": null,
+          "boundary_side": null
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge-1",
+          "source": "internet",
+          "target": "bastion",
+          "points": [
+            [
+              250.0,
+              285.0
+            ],
+            [
+              550.0,
+              285.0
+            ]
+          ],
+          "bend_count": 0,
+          "auto_bend_count": 0,
+          "route_mode": "auto",
+          "route_score": 0,
+          "straight_route_available": true,
+          "semantic": "request"
+        },
+        {
+          "id": "edge-2",
+          "source": "bastion",
+          "target": "mc-host",
+          "points": [
+            [
+              625.0,
+              320.0
+            ],
+            [
+              625.0,
+              413.0
+            ]
+          ],
+          "bend_count": 0,
+          "auto_bend_count": 0,
+          "route_mode": "auto",
+          "route_score": 0,
+          "straight_route_available": true,
+          "semantic": "request"
+        },
+        {
+          "id": "edge-3",
+          "source": "mc-host",
+          "target": "control-node",
+          "points": [
+            [
+              625.0,
+              513.0
+            ],
+            [
+              625.0,
+              623.0
+            ]
+          ],
+          "bend_count": 0,
+          "auto_bend_count": 0,
+          "route_mode": "auto",
+          "route_score": 0,
+          "straight_route_available": true,
+          "semantic": "request"
+        },
+        {
+          "id": "edge-4",
+          "source": "control-node",
+          "target": "cluster-network-pool",
+          "points": [
+            [
+              700.0,
+              672.5
+            ],
+            [
+              830.0,
+              672.5
+            ]
+          ],
+          "bend_count": 0,
+          "auto_bend_count": 0,
+          "route_mode": "auto",
+          "route_score": 0,
+          "straight_route_available": true,
+          "semantic": "request"
+        },
+        {
+          "id": "edge-5",
+          "source": "autoscaling",
+          "target": "cluster-network-pool",
+          "points": [
+            [
+              1130.0,
+              672.5
+            ],
+            [
+              1050.0,
+              672.5
+            ]
+          ],
+          "bend_count": 0,
+          "auto_bend_count": 0,
+          "route_mode": "auto",
+          "route_score": 0,
+          "straight_route_available": true,
+          "semantic": "publish"
+        }
+      ]
+    }
+  ]
+}

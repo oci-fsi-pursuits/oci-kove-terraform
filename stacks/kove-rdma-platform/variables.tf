@@ -201,6 +201,12 @@ variable "management_cloud_init_template_path" {
   default     = ""
 }
 
+variable "enable_management_instance" {
+  type        = bool
+  description = "Create rdma_platform built-in management VM. Set false when MC host should be the only management node."
+  default     = true
+}
+
 variable "rhsm_org_id" {
   type        = string
   description = "RHSM organization ID; injected into cloud-init template as rhsm_org_id. Leave empty if unused."
@@ -347,6 +353,60 @@ variable "cluster_network_create_timeout" {
   default     = ""
 }
 
+variable "cluster_network_enable_autoscaling" {
+  type        = bool
+  description = "Enable OCI autoscaling for cluster-network memory pool."
+  default     = false
+}
+
+variable "cluster_network_autoscaling_min_nodes" {
+  type        = number
+  description = "Minimum memory nodes in autoscaling configuration."
+  default     = 1
+}
+
+variable "cluster_network_autoscaling_max_nodes" {
+  type        = number
+  description = "Maximum memory nodes in autoscaling configuration."
+  default     = 8
+}
+
+variable "cluster_network_autoscaling_initial_nodes" {
+  type        = number
+  description = "Initial memory node count for autoscaling policy capacity."
+  default     = 2
+}
+
+variable "cluster_network_autoscaling_cooldown_seconds" {
+  type        = number
+  description = "Autoscaling cooldown in seconds."
+  default     = 300
+}
+
+variable "cluster_network_autoscaling_scale_out_threshold_percent" {
+  type        = number
+  description = "Scale-out CPU utilization threshold percent."
+  default     = 75
+}
+
+variable "cluster_network_autoscaling_scale_in_threshold_percent" {
+  type        = number
+  description = "Scale-in CPU utilization threshold percent."
+  default     = 30
+}
+
+variable "cluster_network_autoscaling_scale_out_by" {
+  type        = number
+  description = "Number of nodes to add per scale-out action."
+  default     = 1
+}
+
+variable "cluster_network_autoscaling_scale_in_by" {
+  type        = number
+  description = "Number of nodes to remove per scale-in action."
+  default     = 1
+}
+
 variable "create_bm_console_connections" {
   type        = bool
   description = "Create OCI instance console connections for each BM (serial/VNC over SSH tunnel)"
@@ -378,6 +438,30 @@ variable "mc_assign_public_ip" {
   type        = bool
   description = "Assign public IP to MC host primary VNIC."
   default     = false
+}
+
+variable "mc_secondary_vnic_enabled" {
+  type        = bool
+  description = "Attach a secondary VNIC to the MC host."
+  default     = false
+}
+
+variable "mc_secondary_vnic_subnet_id" {
+  type        = string
+  description = "Subnet OCID for MC host secondary VNIC when enabled. Empty = same subnet as MC primary VNIC."
+  default     = ""
+}
+
+variable "mc_secondary_vnic_private_ip" {
+  type        = string
+  description = "Optional fixed private IP for MC host secondary VNIC. Empty = auto-assign."
+  default     = ""
+}
+
+variable "mc_secondary_vnic_interface" {
+  type        = string
+  description = "Expected Linux interface name for the MC host secondary VNIC policy routing setup."
+  default     = "eth1"
 }
 
 variable "mc_shape" {

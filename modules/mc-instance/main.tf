@@ -26,6 +26,11 @@ resource "oci_core_instance" "mc_host" {
       condition     = trimspace(var.cloud_init_template_path) == "" || fileexists(var.cloud_init_template_path)
       error_message = "cloud_init_template_path must be empty or point to an existing file."
     }
+
+    precondition {
+      condition     = !var.secondary_vnic_enabled || trimspace(var.secondary_vnic_subnet_id) != ""
+      error_message = "secondary_vnic_subnet_id must be set when secondary_vnic_enabled = true."
+    }
   }
 
   compartment_id      = var.compartment_ocid
@@ -58,5 +63,17 @@ resource "oci_core_instance" "mc_host" {
     subnet_id        = var.subnet_id
     assign_public_ip = var.assign_public_ip
     hostname_label   = local.hostname_label
+  }
+}
+
+resource "oci_core_vnic_attachment" "mc_secondary" {
+  count = var.secondary_vnic_enabled ? 1 : 0
+
+  instance_id = oci_core_instance.mc_host.id
+
+  create_vnic_details {
+    subnet_id        = var.secondary_vnic_subnet_id
+    assign_public_ip = false
+    private_ip       = trimspace(var.secondary_vnic_private_ip) != "" ? trimspace(var.secondary_vnic_private_ip) : null
   }
 }

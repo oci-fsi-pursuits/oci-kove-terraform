@@ -18,14 +18,13 @@ Management and bastion shapes can be configured as flex VMs, and custom image OC
 
 | Option | Path | Notes |
 |---|---|---|
-| Networking only | `modules/networking` or `examples/minimal` + `modules/networking` | Creates VCN, subnets, routes, gateways, and security lists only. |
-| Full RDMA platform on compute | `stacks/kove-rdma-platform` or `examples/rdma-platform` | Deploys bastion (optional), management VM, and RDMA nodes. |
-| OKE deployment | `examples/oke` using `modules/oke` | Cloud-native OKE cluster path, separate from bare-metal RDMA node deployment. |
-| Autoscale overlay (OCI Function + alarm) | `modules/compute-cluster/functions-autoscale` | Deploys IAM + function + alarm wiring for memory-node scale-out. |
+| Networking only | `modules/networking` | Creates VCN, subnets, routes, gateways, and security lists only. |
+| Full RDMA platform | `stacks/kove-rdma-platform` using `modules/xpd-cluster` | Deploys bastion (optional), management VM, and RDMA nodes. |
+| OKE deployment | `modules/oke` | Cloud-native OKE cluster path, separate from bare-metal RDMA node deployment. |
 
 ## RDMA deployment modes
 
-In `modules/compute-cluster` / `modules/cluster-network` and `stacks/kove-rdma-platform`:
+In `modules/xpd-cluster` and `stacks/kove-rdma-platform`:
 
 - `rdma_deployment_mode = "compute_cluster"` (default)
   - Creates a compute cluster.
@@ -36,20 +35,11 @@ In `modules/compute-cluster` / `modules/cluster-network` and `stacks/kove-rdma-p
 
 ## Autoscaling behavior
 
-Autoscaling is OCI-native and function-driven via `modules/compute-cluster/functions-autoscale`:
-
-- Monitoring alarm evaluates memory metrics for tagged memory nodes.
-- Notifications invoke OCI Function.
-- Function submits RM apply job with `memory_node_count = current + 1` when thresholds are met.
-
-Important:
-
-- Legacy management-node/systemd autoscaling in the RDMA platform module is deprecated and disabled.
-- Use `modules/compute-cluster/functions-autoscale` for active autoscaling runtime.
+The RDMA stack supports OCI autoscaling configuration in `cluster_network` mode through module inputs (min/max/threshold/cooldown settings).
 
 ## Cloud-init behavior
 
-Cloud-init templates in `modules/compute-cluster/cloud_init` and `modules/cluster-network/cloud_init` are used to:
+Cloud-init templates in `modules/xpd-cluster/cloud_init` are used to:
 
 - bootstrap SSH access on RHEL images
 - optionally register RHSM credentials
@@ -59,16 +49,15 @@ Cloud-init templates in `modules/compute-cluster/cloud_init` and `modules/cluste
 
 | Path | Purpose |
 |---|---|
-| `modules/` | Reusable Terraform modules (`labels`, `networking`, `oke`, `compute-cluster`, `cluster-network`). |
+| `modules/` | Reusable Terraform modules (`labels`, `networking`, `oke`, `xpd-cluster`, `mc-instance`). |
 | `stacks/` | Opinionated deployment wrappers for OCI Resource Manager. |
-| `examples/` | Runnable roots that demonstrate module usage. |
 | `docs/` | Internal project documents such as QA tracking logs. |
 
 ## Quick start
 
-## Frankfurt prod cluster-network MC reference plan
+## Frankfurt prod xpd-cluster MC reference plan
 
-![Frankfurt prod cluster-network MC from plan](docs/images/frankfurt-prod-cluster-network-mc-from-plan.png)
+![Frankfurt prod xpd-cluster MC from plan](docs/images/frankfurt-prod-cluster-network-mc-from-plan.png)
 
 ### Full RDMA stack
 
@@ -81,10 +70,6 @@ terraform init
 terraform plan
 terraform apply
 ```
-
-### Autoscale overlay
-
-Deploy `modules/compute-cluster/functions-autoscale` as a separate root to manage function + alarm autoscaling lifecycle.
 
 ## Requirements
 

@@ -11,11 +11,12 @@ locals {
 
   rendered_user_data = replace(replace(
     templatefile(local.cloud_init_src_path, {
-      setup_script_path = var.setup_script_path
-      guest_vm_name     = var.guest_vm_name
-      guest_disk_path   = var.guest_disk_path
-      guest_memory_mb   = tostring(var.guest_memory_mb)
-      guest_vcpus       = tostring(var.guest_vcpus)
+      setup_script_path        = var.setup_script_path
+      guest_vm_name            = var.guest_vm_name
+      guest_disk_path          = var.guest_disk_path
+      guest_memory_mb          = tostring(var.guest_memory_mb)
+      guest_vcpus              = tostring(var.guest_vcpus)
+      secondary_vnic_interface = var.secondary_vnic_interface
     }),
     "\r\n", "\n"),
   "\r", "\n")
