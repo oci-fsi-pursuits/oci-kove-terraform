@@ -23,14 +23,9 @@ output "public_subnet_id" {
   description = "Public subnet OCID."
 }
 
-output "management_subnet_id" {
-  value       = oci_core_subnet.management.id
-  description = "Management subnet OCID."
-}
-
-output "rdma_subnet_id" {
-  value       = oci_core_subnet.rdma.id
-  description = "RDMA / BM subnet OCID."
+output "private_subnet_id" {
+  value       = oci_core_subnet.private.id
+  description = "Private subnet OCID."
 }
 
 output "public_subnet_availability_domain" {
@@ -38,12 +33,7 @@ output "public_subnet_availability_domain" {
   description = "AD name for the public subnet."
 }
 
-output "management_subnet_availability_domain" {
-  value       = oci_core_subnet.management.availability_domain
-  description = "AD name for the management subnet."
-}
-
-output "rdma_subnet_availability_domain" {
-  value       = oci_core_subnet.rdma.availability_domain
-  description = "AD name for the RDMA subnet."
+output "private_subnet_availability_domain" {
+  value       = oci_core_subnet.private.availability_domain
+  description = "AD name for the private subnet."
 }

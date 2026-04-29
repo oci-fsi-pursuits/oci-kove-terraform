@@ -64,7 +64,7 @@ resource "oci_core_instance_configuration" "rdma_cluster_network" {
       }
 
       create_vnic_details {
-        subnet_id        = var.rdma_subnet_id
+        subnet_id        = var.private_subnet_id
         assign_public_ip = false
       }
     }
@@ -136,7 +136,7 @@ resource "oci_core_instance" "cluster_network_control" {
   }
 
   create_vnic_details {
-    subnet_id        = var.rdma_subnet_id
+    subnet_id        = var.private_subnet_id
     assign_public_ip = false
     hostname_label   = var.compute_system_hostname
   }
@@ -171,7 +171,7 @@ resource "oci_core_cluster_network" "rdma" {
 
   placement_configuration {
     availability_domain = var.cluster_ad
-    primary_subnet_id   = var.rdma_subnet_id
+    primary_subnet_id   = var.private_subnet_id
   }
 
   timeouts {

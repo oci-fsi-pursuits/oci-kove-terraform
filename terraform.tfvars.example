@@ -25,8 +25,7 @@ availability_domain = "REPLACE_ME"
 use_existing_vcn              = true
 existing_vcn_id               = "ocid1.vcn.oc1.eu-frankfurt-1.REPLACE_ME"
 existing_public_subnet_id     = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
-existing_management_subnet_id = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
-existing_rdma_subnet_id       = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+existing_private_subnet_id    = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
 # RDMA / BM plane
 bm_node_image_ocid   = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
@@ -86,3 +85,11 @@ mc_custom_image_ocid = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
 # If your custom image is already pre-entitled (or doesn't need RHSM), these can stay unset.
 # rhsm_org_id         = "REPLACE_ME"
 # rhsm_activation_key = "REPLACE_ME"
+
+# Offline RPM repo tarballs for cloud-init based flows.
+# The tarball must contain a createrepo-generated repo, including repodata/repomd.xml.
+# Use an Object Storage PAR URL for private-OCI/no-public-internet installs, or a pre-baked local path for fully offline images.
+# offline_repo_tarball_url    = "https://objectstorage.REGION.oraclecloud.com/p/REPLACE_ME/n/NAMESPACE/b/BUCKET/o/rdma-rpms.tar.gz"
+# offline_repo_tarball_sha256 = "REPLACE_ME"
+# mc_offline_repo_tarball_url    = "https://objectstorage.REGION.oraclecloud.com/p/REPLACE_ME/n/NAMESPACE/b/BUCKET/o/mc-rpms.tar.gz"
+# mc_offline_repo_tarball_sha256 = "REPLACE_ME"

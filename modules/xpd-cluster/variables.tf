@@ -62,14 +62,20 @@ variable "availability_domain" {
 # ---------------------------------------------------------------------------
 variable "use_existing_vcn" {
   type        = bool
-  description = "false = create VCN with public + management + RDMA subnets; true = supply subnet OCIDs"
+  description = "false = create VCN with public + private subnets; true = supply subnet OCIDs"
   default     = false
 }
 
 variable "vcn_cidr_block" {
   type        = string
-  description = "VCN CIDR when creating a new VCN. Subnets: /24 at indices 1 (public), 2 (mgmt), 3 (rdma)."
+  description = "VCN CIDR when creating a new VCN. Subnets: /24 at indices 1 (public), 2 (private)."
   default     = "10.0.0.0/16"
+}
+
+variable "private_subnet_name_prefix" {
+  type        = string
+  description = "Optional prefix added to private subnet display name when creating networking."
+  default     = ""
 }
 
 variable "existing_vcn_id" {
@@ -84,15 +90,9 @@ variable "existing_public_subnet_id" {
   default     = ""
 }
 
-variable "existing_management_subnet_id" {
+variable "existing_private_subnet_id" {
   type        = string
-  description = "Private subnet for management VM (NAT egress recommended)"
-  default     = ""
-}
-
-variable "existing_rdma_subnet_id" {
-  type        = string
-  description = "Private subnet for BM compute cluster (primary VNIC placement)"
+  description = "Private subnet for management VM and BM compute cluster (primary VNIC placement)."
   default     = ""
 }
 
@@ -182,7 +182,7 @@ variable "management_secondary_vnic_enabled" {
 
 variable "management_secondary_vnic_subnet_id" {
   type        = string
-  description = "Optional subnet OCID for the management secondary VNIC. Empty defaults to the RDMA subnet."
+  description = "Optional subnet OCID for the management secondary VNIC. Empty defaults to the private subnet."
   default     = ""
 }
 
@@ -225,6 +225,31 @@ variable "playbooks_zip_url" {
   type        = string
   description = "Optional HTTPS URL for playbooks.zip (injected into kove-rdma cloud-init). Empty skips download."
   default     = ""
+}
+
+variable "offline_repo_tarball_url" {
+  type        = string
+  description = "Optional URL or absolute local path to a tar.gz containing a createrepo-generated RPM repository for offline cloud-init installs."
+  default     = ""
+  sensitive   = true
+}
+
+variable "offline_repo_tarball_sha256" {
+  type        = string
+  description = "Optional SHA256 checksum for offline_repo_tarball_url."
+  default     = ""
+}
+
+variable "offline_base_rpm_packages" {
+  type        = string
+  description = "Space-separated base package names installed from the offline RPM repository when offline_repo_tarball_url is set."
+  default     = "python3 jq unzip curl ansible-core"
+}
+
+variable "offline_rdma_rpm_packages" {
+  type        = string
+  description = "Space-separated RDMA package names installed from the offline RPM repository on BM/memory nodes when offline_repo_tarball_url is set."
+  default     = "rdma-core libibverbs infiniband-diags librdmacm-utils libibverbs-utils kove-oci-hpc-ansible"
 }
 
 variable "cloud_init_template_extra_vars" {

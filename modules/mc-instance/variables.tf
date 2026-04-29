@@ -143,6 +143,25 @@ variable "cloud_init_template_path" {
   default     = ""
 }
 
+variable "offline_repo_tarball_url" {
+  type        = string
+  description = "Optional URL or absolute local path to a tar.gz containing a createrepo-generated RPM repository for offline cloud-init installs."
+  default     = ""
+  sensitive   = true
+}
+
+variable "offline_repo_tarball_sha256" {
+  type        = string
+  description = "Optional SHA256 checksum for offline_repo_tarball_url."
+  default     = ""
+}
+
+variable "offline_rpm_packages" {
+  type        = string
+  description = "Space-separated package names installed from the offline RPM repository when offline_repo_tarball_url is set."
+  default     = "qemu-kvm libvirt virt-install qemu-img libguestfs-tools-c python3"
+}
+
 variable "setup_script_path" {
   type        = string
   description = "Path where the MC helper script is created on host for cloud_init_setup mode."

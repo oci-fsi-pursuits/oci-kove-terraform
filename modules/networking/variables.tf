@@ -5,7 +5,13 @@ variable "compartment_id" {
 
 variable "vcn_cidr_block" {
   type        = string
-  description = "VCN CIDR. Subnets use /24 at indices 1 (public), 2 (mgmt), 3 (rdma) under a /16-style layout."
+  description = "VCN CIDR. Subnets use /24 at indices 1 (public), 2 (private) under a /16-style layout."
+}
+
+variable "private_subnet_name_prefix" {
+  type        = string
+  description = "Optional prefix added to the private subnet display name."
+  default     = ""
 }
 
 variable "name_prefix" {

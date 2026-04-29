@@ -16,6 +16,7 @@ module "networking" {
 
   compartment_id                    = var.compartment_ocid
   vcn_cidr_block                    = var.vcn_cidr_block
+  private_subnet_name_prefix        = var.private_subnet_name_prefix
   name_prefix                       = module.labels.name_prefix
   freeform_tags                     = module.labels.tags
   ssh_ingress_cidr                  = var.ssh_ingress_cidr

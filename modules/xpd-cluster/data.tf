@@ -11,14 +11,9 @@ data "oci_core_subnet" "existing_public" {
   subnet_id = var.existing_public_subnet_id
 }
 
-data "oci_core_subnet" "existing_management" {
+data "oci_core_subnet" "existing_private" {
   count     = var.use_existing_vcn ? 1 : 0
-  subnet_id = var.existing_management_subnet_id
-}
-
-data "oci_core_subnet" "existing_rdma" {
-  count     = var.use_existing_vcn ? 1 : 0
-  subnet_id = var.existing_rdma_subnet_id
+  subnet_id = var.existing_private_subnet_id
 }
 
 data "oci_core_cluster_network_instances" "rdma" {

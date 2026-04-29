@@ -19,21 +19,17 @@ locals {
 
   vcn_id = var.use_existing_vcn ? var.existing_vcn_id : module.networking[0].vcn_id
 
-  public_subnet_id     = var.use_existing_vcn ? var.existing_public_subnet_id : module.networking[0].public_subnet_id
-  management_subnet_id = var.use_existing_vcn ? var.existing_management_subnet_id : module.networking[0].management_subnet_id
-  rdma_subnet_id       = var.use_existing_vcn ? var.existing_rdma_subnet_id : module.networking[0].rdma_subnet_id
+  public_subnet_id  = var.use_existing_vcn ? var.existing_public_subnet_id : module.networking[0].public_subnet_id
+  private_subnet_id = var.use_existing_vcn ? var.existing_private_subnet_id : module.networking[0].private_subnet_id
 
-  rdma_subnet_ad   = var.use_existing_vcn ? try(trimspace(data.oci_core_subnet.existing_rdma[0].availability_domain), "") : try(trimspace(module.networking[0].rdma_subnet_availability_domain), "")
-  mgmt_subnet_ad   = var.use_existing_vcn ? try(trimspace(data.oci_core_subnet.existing_management[0].availability_domain), "") : try(trimspace(module.networking[0].management_subnet_availability_domain), "")
-  public_subnet_ad = var.use_existing_vcn ? try(trimspace(data.oci_core_subnet.existing_public[0].availability_domain), "") : try(trimspace(module.networking[0].public_subnet_availability_domain), "")
+  private_subnet_ad = var.use_existing_vcn ? try(trimspace(data.oci_core_subnet.existing_private[0].availability_domain), "") : try(trimspace(module.networking[0].private_subnet_availability_domain), "")
+  public_subnet_ad  = var.use_existing_vcn ? try(trimspace(data.oci_core_subnet.existing_public[0].availability_domain), "") : try(trimspace(module.networking[0].public_subnet_availability_domain), "")
 
   stack_ad = trimspace(var.availability_domain)
 
   cluster_ad = length(local.stack_ad) > 0 ? local.stack_ad : (
-    length(local.rdma_subnet_ad) > 0 ? local.rdma_subnet_ad : (
-      length(local.mgmt_subnet_ad) > 0 ? local.mgmt_subnet_ad : (
-        length(local.public_subnet_ad) > 0 ? local.public_subnet_ad : local.ad_name
-      )
+    length(local.private_subnet_ad) > 0 ? local.private_subnet_ad : (
+      length(local.public_subnet_ad) > 0 ? local.public_subnet_ad : local.ad_name
     )
   )
 
@@ -62,7 +58,7 @@ locals {
     local.cluster_network_memory_private_ips,
   ) : []
 
-  management_secondary_vnic_subnet_id_effective = trimspace(var.management_secondary_vnic_subnet_id) != "" ? trimspace(var.management_secondary_vnic_subnet_id) : local.rdma_subnet_id
+  management_secondary_vnic_subnet_id_effective = trimspace(var.management_secondary_vnic_subnet_id) != "" ? trimspace(var.management_secondary_vnic_subnet_id) : local.private_subnet_id
 
   ol8_image_id = length(data.oci_core_images.ol8_flex.images) > 0 ? data.oci_core_images.ol8_flex.images[0].id : ""
 
@@ -76,15 +72,19 @@ locals {
 
   cloud_init_common_vars = merge(
     {
-      rhsm_org_id         = var.rhsm_org_id
-      rhsm_activation_key = var.rhsm_activation_key
-      playbooks_zip_url   = var.playbooks_zip_url
-      authorized_keys_b64 = base64encode(local.cluster_ssh_authorized_keys)
-      imds_key_bootstrap  = tostring(var.bm_imds_ssh_key_bootstrap)
-      rdma_use_oca_plugin = tostring(var.use_compute_agent)
-      primary_login_user  = "cloud-user"
-      compartment_ocid    = var.compartment_ocid
-      rdma_interface      = "eth2"
+      rhsm_org_id                 = var.rhsm_org_id
+      rhsm_activation_key         = var.rhsm_activation_key
+      playbooks_zip_url           = var.playbooks_zip_url
+      offline_repo_tarball_url    = var.offline_repo_tarball_url
+      offline_repo_tarball_sha256 = var.offline_repo_tarball_sha256
+      offline_base_rpm_packages   = var.offline_base_rpm_packages
+      offline_rdma_rpm_packages   = var.offline_rdma_rpm_packages
+      authorized_keys_b64         = base64encode(local.cluster_ssh_authorized_keys)
+      imds_key_bootstrap          = tostring(var.bm_imds_ssh_key_bootstrap)
+      rdma_use_oca_plugin         = tostring(var.use_compute_agent)
+      primary_login_user          = "cloud-user"
+      compartment_ocid            = var.compartment_ocid
+      rdma_interface              = "eth2"
     },
     var.cloud_init_template_extra_vars,
   )

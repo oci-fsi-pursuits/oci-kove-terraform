@@ -30,3 +30,4 @@ modules/compute-cluster/
 modules/xpd-cluster/README_ALIAS.md
 output/
 modules/oke/
+tfplan-*.bin

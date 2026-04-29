@@ -15,10 +15,10 @@ module "rdma_platform" {
 
   use_existing_vcn                  = var.use_existing_vcn
   vcn_cidr_block                    = var.vcn_cidr_block
+  private_subnet_name_prefix        = var.private_subnet_name_prefix
   existing_vcn_id                   = var.existing_vcn_id
   existing_public_subnet_id         = var.existing_public_subnet_id
-  existing_management_subnet_id     = var.existing_management_subnet_id
-  existing_rdma_subnet_id           = var.existing_rdma_subnet_id
+  existing_private_subnet_id        = var.existing_private_subnet_id
   private_subnet_ssh_sources_extras = var.private_subnet_ssh_sources_extras
   ssh_ingress_cidr                  = var.ssh_ingress_cidr
   public_ingress_hpc_ui_ports       = var.public_ingress_hpc_ui_ports
@@ -42,6 +42,10 @@ module "rdma_platform" {
   rhsm_org_id                    = var.rhsm_org_id
   rhsm_activation_key            = var.rhsm_activation_key
   playbooks_zip_url              = var.playbooks_zip_url
+  offline_repo_tarball_url       = var.offline_repo_tarball_url
+  offline_repo_tarball_sha256    = var.offline_repo_tarball_sha256
+  offline_base_rpm_packages      = var.offline_base_rpm_packages
+  offline_rdma_rpm_packages      = var.offline_rdma_rpm_packages
   cloud_init_template_extra_vars = var.cloud_init_template_extra_vars
 
   bm_node_shape                                           = var.bm_node_shape
@@ -84,7 +88,7 @@ module "mc_instance" {
 
   tenancy_ocid        = var.tenancy_ocid
   compartment_ocid    = var.compartment_ocid
-  subnet_id           = trimspace(var.mc_subnet_id) != "" ? trimspace(var.mc_subnet_id) : module.rdma_platform.management_subnet_ocid
+  subnet_id           = trimspace(var.mc_subnet_id) != "" ? trimspace(var.mc_subnet_id) : module.rdma_platform.private_subnet_ocid
   availability_domain = trimspace(var.mc_availability_domain) != "" ? trimspace(var.mc_availability_domain) : module.rdma_platform.availability_domain_used
   ssh_public_key      = var.ssh_public_key
 
@@ -97,7 +101,7 @@ module "mc_instance" {
   hostname_label            = var.mc_hostname_label
   assign_public_ip          = var.mc_assign_public_ip
   secondary_vnic_enabled    = var.mc_secondary_vnic_enabled
-  secondary_vnic_subnet_id  = trimspace(var.mc_secondary_vnic_subnet_id) != "" ? trimspace(var.mc_secondary_vnic_subnet_id) : (trimspace(var.mc_subnet_id) != "" ? trimspace(var.mc_subnet_id) : module.rdma_platform.management_subnet_ocid)
+  secondary_vnic_subnet_id  = trimspace(var.mc_secondary_vnic_subnet_id) != "" ? trimspace(var.mc_secondary_vnic_subnet_id) : (trimspace(var.mc_subnet_id) != "" ? trimspace(var.mc_subnet_id) : module.rdma_platform.private_subnet_ocid)
   secondary_vnic_private_ip = var.mc_secondary_vnic_private_ip
   secondary_vnic_interface  = var.mc_secondary_vnic_interface
 
@@ -106,10 +110,13 @@ module "mc_instance" {
   memory_gbs           = var.mc_memory_gbs
   boot_volume_size_gbs = var.mc_boot_volume_size_gbs
 
-  deployment_mode          = var.mc_deployment_mode
-  custom_image_ocid        = var.mc_custom_image_ocid
-  base_image_ocid          = var.mc_base_image_ocid
-  cloud_init_template_path = var.mc_cloud_init_template_path
+  deployment_mode             = var.mc_deployment_mode
+  custom_image_ocid           = var.mc_custom_image_ocid
+  base_image_ocid             = var.mc_base_image_ocid
+  cloud_init_template_path    = var.mc_cloud_init_template_path
+  offline_repo_tarball_url    = var.mc_offline_repo_tarball_url
+  offline_repo_tarball_sha256 = var.mc_offline_repo_tarball_sha256
+  offline_rpm_packages        = var.mc_offline_rpm_packages
 
   setup_script_path = var.mc_setup_script_path
   guest_vm_name     = var.mc_guest_vm_name

@@ -21,10 +21,82 @@ write_files:
       COMPARTMENT_OCID=${jsonencode(compartment_ocid)}
       RDMA_IFACE=${jsonencode(rdma_interface)}
       PLAYBOOKS_ZIP_URL=${jsonencode(playbooks_zip_url)}
+      OFFLINE_REPO_TARBALL_URL=${jsonencode(offline_repo_tarball_url)}
+      OFFLINE_REPO_TARBALL_SHA256=${jsonencode(offline_repo_tarball_sha256)}
+      OFFLINE_BASE_RPM_PACKAGES=${jsonencode(offline_base_rpm_packages)}
+      OFFLINE_RDMA_RPM_PACKAGES=${jsonencode(offline_rdma_rpm_packages)}
 
       TOKEN_URL="http://169.254.169.254/opc/v2/instance/refreshtoken"
       MD_URL="http://169.254.169.254/opc/v2/instance/metadata/ssh_authorized_keys"
       V1_URL="http://169.254.169.254/opc/v1/instance/metadata/ssh_authorized_keys"
+      OFFLINE_REPO_DIR="/opt/kove/offline-rpm-repo"
+      OFFLINE_REPO_FILE="/var/tmp/kove-offline-rpm-repo.tar.gz"
+
+      download_file() {
+        local src="$1"
+        local dest="$2"
+        case "$src" in
+          file://*) cp "$(printf '%s' "$src" | sed 's#^file://##')" "$dest" ;;
+          /*) cp "$src" "$dest" ;;
+          http://*|https://*)
+            if command -v curl >/dev/null 2>&1; then
+              curl -fL "$src" -o "$dest"
+            elif command -v python3 >/dev/null 2>&1; then
+              URL="$src" DEST="$dest" python3 - <<'PY'
+      import os
+      import urllib.request
+      urllib.request.urlretrieve(os.environ["URL"], os.environ["DEST"])
+      PY
+            else
+              echo "ERROR: curl or python3 is required to download $src" >&2
+              return 1
+            fi
+            ;;
+          *) echo "ERROR: unsupported offline repo tarball source: $src" >&2; return 1 ;;
+        esac
+      }
+
+      configure_offline_repo() {
+        [ -n "$OFFLINE_REPO_TARBALL_URL" ] || return 0
+        mkdir -p "$OFFLINE_REPO_DIR"
+        download_file "$OFFLINE_REPO_TARBALL_URL" "$OFFLINE_REPO_FILE"
+        if [ -n "$OFFLINE_REPO_TARBALL_SHA256" ]; then
+          printf '%s  %s\n' "$OFFLINE_REPO_TARBALL_SHA256" "$OFFLINE_REPO_FILE" | sha256sum -c -
+        fi
+        tar -xzf "$OFFLINE_REPO_FILE" -C "$OFFLINE_REPO_DIR"
+        local repomd=""
+        repomd=$(find "$OFFLINE_REPO_DIR" -path '*/repodata/repomd.xml' -type f | head -n 1)
+        [ -n "$repomd" ] || { echo "ERROR: offline repo tarball does not contain repodata/repomd.xml" >&2; return 1; }
+        local repo_dir
+        repo_dir=$(dirname "$(dirname "$repomd")")
+        cat >/etc/yum.repos.d/kove-offline.repo <<EOF
+      [kove-offline]
+      name=Kove Offline RPM Repo
+      baseurl=file://$repo_dir
+      enabled=1
+      gpgcheck=0
+      EOF
+      }
+
+      install_packages() {
+        local packages="$1"
+        [ -n "$(echo "$packages" | tr -d '[:space:]')" ] || return 0
+        if [ -n "$OFFLINE_REPO_TARBALL_URL" ]; then
+          configure_offline_repo
+          if command -v dnf >/dev/null 2>&1; then
+            dnf -y --disablerepo='*' --enablerepo='kove-offline' install $packages
+          elif command -v yum >/dev/null 2>&1; then
+            yum -y --disablerepo='*' --enablerepo='kove-offline' install $packages
+          else
+            echo "ERROR: dnf or yum is required to install offline RPM packages" >&2
+            return 1
+          fi
+        elif command -v dnf >/dev/null 2>&1; then
+          dnf -y install $packages
+        elif command -v yum >/dev/null 2>&1; then
+          yum -y install $packages
+        fi
+      }
 
       install_keys() {
         local u="$1"
@@ -66,11 +138,7 @@ write_files:
       chmod 440 /etc/sudoers.d/90-cloud-user
       visudo -cf /etc/sudoers
 
-      if command -v dnf >/dev/null 2>&1; then
-        dnf -y install python3 jq unzip curl ansible-core || true
-      elif command -v yum >/dev/null 2>&1; then
-        yum -y install python3 jq unzip curl ansible-core || true
-      fi
+      install_packages "$OFFLINE_BASE_RPM_PACKAGES"
 
       KEYS=""
       if [[ -n "$${AUTH_KEYS_B64}" ]]; then
@@ -87,11 +155,7 @@ write_files:
       fi
 
       if [[ "$${NODE_ROLE}" == "bm" || "$${NODE_ROLE}" == "memory" ]]; then
-        if command -v dnf >/dev/null 2>&1; then
-          dnf -y install rdma-core libibverbs infiniband-diags librdmacm-utils libibverbs-utils --nobest || true
-        elif command -v yum >/dev/null 2>&1; then
-          yum -y install rdma-core libibverbs infiniband-diags librdmacm-utils libibverbs-utils || true
-        fi
+        install_packages "$OFFLINE_RDMA_RPM_PACKAGES"
         if [[ "$${RDMA_USE_OCA_PLUGIN}" == "true" ]]; then
           systemctl enable --now oracle-cloud-agent || true
         fi

@@ -81,7 +81,7 @@ resource "oci_core_instance" "management" {
   }
 
   create_vnic_details {
-    subnet_id        = local.management_subnet_id
+    subnet_id        = local.private_subnet_id
     assign_public_ip = false
     hostname_label   = local.management_hostname
   }

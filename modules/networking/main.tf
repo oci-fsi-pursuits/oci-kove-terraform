@@ -1,9 +1,8 @@
 locals {
   private_subnet_ssh_extra_cidrs = compact([for s in split(",", var.private_subnet_ssh_sources_extras) : trimspace(s) if trimspace(s) != ""])
 
-  public_subnet_cidr = cidrsubnet(var.vcn_cidr_block, 8, 1)
-  mgmt_subnet_cidr   = cidrsubnet(var.vcn_cidr_block, 8, 2)
-  rdma_subnet_cidr   = cidrsubnet(var.vcn_cidr_block, 8, 3)
+  public_subnet_cidr  = cidrsubnet(var.vcn_cidr_block, 8, 1)
+  private_subnet_cidr = cidrsubnet(var.vcn_cidr_block, 8, 2)
 
   dns_safe_prefix = substr(replace(replace(lower(trimspace(var.name_prefix)), "-", ""), "_", ""), 0, 12)
   vcn_dns_label   = length(local.dns_safe_prefix) > 0 ? local.dns_safe_prefix : "rdmaplatform"
@@ -11,16 +10,15 @@ locals {
   oracle_services_network = data.oci_core_services.oracle_services_network.services[0]
   dhcp_search_domain      = format("%s.oraclevcn.com", local.vcn_dns_label)
 
-  vcn_name           = "${var.name_prefix}-vcn"
-  igw_name           = "${var.name_prefix}-igw"
-  nat_name           = "${var.name_prefix}-nat"
-  public_rt_name     = "${var.name_prefix}-public-rt"
-  private_rt_name    = "${var.name_prefix}-private-rt"
-  public_sl_name     = "${var.name_prefix}-public-sl"
-  private_sl_name    = "${var.name_prefix}-private-sl"
-  public_subnet_name = "${var.name_prefix}-public"
-  mgmt_subnet_name   = "${var.name_prefix}-mgmt"
-  rdma_subnet_name   = "${var.name_prefix}-rdma"
+  vcn_name            = "${var.name_prefix}-vcn"
+  igw_name            = "${var.name_prefix}-igw"
+  nat_name            = "${var.name_prefix}-nat"
+  public_rt_name      = "${var.name_prefix}-public-rt"
+  private_rt_name     = "${var.name_prefix}-private-rt"
+  public_sl_name      = "${var.name_prefix}-public-sl"
+  private_sl_name     = "${var.name_prefix}-private-sl"
+  public_subnet_name  = "${var.name_prefix}-public"
+  private_subnet_name = trimspace(var.private_subnet_name_prefix) != "" ? "${trimspace(var.private_subnet_name_prefix)}-${var.name_prefix}-private" : "${var.name_prefix}-private"
 }
 
 resource "oci_core_virtual_network" "this" {
@@ -231,28 +229,15 @@ resource "oci_core_subnet" "public" {
   freeform_tags              = var.freeform_tags
 }
 
-resource "oci_core_subnet" "management" {
+resource "oci_core_subnet" "private" {
   compartment_id             = var.compartment_id
-  display_name               = local.mgmt_subnet_name
+  display_name               = local.private_subnet_name
   vcn_id                     = oci_core_virtual_network.this.id
-  cidr_block                 = local.mgmt_subnet_cidr
+  cidr_block                 = local.private_subnet_cidr
   route_table_id             = oci_core_route_table.private.id
   security_list_ids          = [oci_core_security_list.private.id]
   dhcp_options_id            = oci_core_dhcp_options.this.id
   prohibit_public_ip_on_vnic = true
-  dns_label                  = "mgmt"
-  freeform_tags              = var.freeform_tags
-}
-
-resource "oci_core_subnet" "rdma" {
-  compartment_id             = var.compartment_id
-  display_name               = local.rdma_subnet_name
-  vcn_id                     = oci_core_virtual_network.this.id
-  cidr_block                 = local.rdma_subnet_cidr
-  route_table_id             = oci_core_route_table.private.id
-  security_list_ids          = [oci_core_security_list.private.id]
-  dhcp_options_id            = oci_core_dhcp_options.this.id
-  prohibit_public_ip_on_vnic = true
-  dns_label                  = "rdma"
+  dns_label                  = "private"
   freeform_tags              = var.freeform_tags
 }

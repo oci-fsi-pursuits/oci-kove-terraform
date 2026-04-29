@@ -11,12 +11,15 @@ locals {
 
   rendered_user_data = replace(replace(
     templatefile(local.cloud_init_src_path, {
-      setup_script_path        = var.setup_script_path
-      guest_vm_name            = var.guest_vm_name
-      guest_disk_path          = var.guest_disk_path
-      guest_memory_mb          = tostring(var.guest_memory_mb)
-      guest_vcpus              = tostring(var.guest_vcpus)
-      secondary_vnic_interface = var.secondary_vnic_interface
+      setup_script_path           = var.setup_script_path
+      guest_vm_name               = var.guest_vm_name
+      guest_disk_path             = var.guest_disk_path
+      guest_memory_mb             = tostring(var.guest_memory_mb)
+      guest_vcpus                 = tostring(var.guest_vcpus)
+      secondary_vnic_interface    = var.secondary_vnic_interface
+      offline_repo_tarball_url    = var.offline_repo_tarball_url
+      offline_repo_tarball_sha256 = var.offline_repo_tarball_sha256
+      offline_rpm_packages        = var.offline_rpm_packages
     }),
     "\r\n", "\n"),
   "\r", "\n")

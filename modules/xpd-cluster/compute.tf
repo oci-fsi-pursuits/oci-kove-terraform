@@ -6,10 +6,9 @@ resource "oci_core_compute_cluster" "bm_compute" {
       condition = !var.use_existing_vcn || (
         length(trimspace(var.existing_vcn_id)) > 0 &&
         length(trimspace(var.existing_public_subnet_id)) > 0 &&
-        length(trimspace(var.existing_management_subnet_id)) > 0 &&
-        length(trimspace(var.existing_rdma_subnet_id)) > 0
+        length(trimspace(var.existing_private_subnet_id)) > 0
       )
-      error_message = "When use_existing_vcn is true, set existing_vcn_id, existing_public_subnet_id, existing_management_subnet_id, and existing_rdma_subnet_id (non-empty)."
+      error_message = "When use_existing_vcn is true, set existing_vcn_id, existing_public_subnet_id, and existing_private_subnet_id (non-empty)."
     }
     precondition {
       condition     = local.use_compute_cluster_mode || !var.cluster_placement_group_enabled
@@ -93,7 +92,7 @@ resource "oci_core_instance" "bm_nodes" {
   compute_cluster_id = oci_core_compute_cluster.bm_compute[0].id
 
   create_vnic_details {
-    subnet_id        = local.rdma_subnet_id
+    subnet_id        = local.private_subnet_id
     assign_public_ip = false
     hostname_label   = count.index == 0 ? local.compute_system_hostname : (local.rdma_host_label_prefix != "" ? "${local.rdma_host_label_prefix}xpd${count.index}" : "xpd${count.index}")
   }
@@ -172,7 +171,7 @@ resource "oci_core_instance_configuration" "rdma_cluster_network" {
       }
 
       create_vnic_details {
-        subnet_id        = local.rdma_subnet_id
+        subnet_id        = local.private_subnet_id
         assign_public_ip = false
       }
     }
@@ -246,7 +245,7 @@ resource "oci_core_instance" "cluster_network_control" {
   }
 
   create_vnic_details {
-    subnet_id        = local.rdma_subnet_id
+    subnet_id        = local.private_subnet_id
     assign_public_ip = false
     hostname_label   = local.compute_system_hostname
   }
@@ -283,7 +282,7 @@ resource "oci_core_cluster_network" "rdma" {
 
   placement_configuration {
     availability_domain = local.cluster_ad
-    primary_subnet_id   = local.rdma_subnet_id
+    primary_subnet_id   = local.private_subnet_id
   }
 
   timeouts {

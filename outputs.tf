@@ -6,12 +6,8 @@ output "public_subnet_ocid" {
   value = module.rdma_platform.public_subnet_ocid
 }
 
-output "management_subnet_ocid" {
-  value = module.rdma_platform.management_subnet_ocid
-}
-
-output "rdma_subnet_ocid" {
-  value = module.rdma_platform.rdma_subnet_ocid
+output "private_subnet_ocid" {
+  value = module.rdma_platform.private_subnet_ocid
 }
 
 output "public_route_table_ocid" {

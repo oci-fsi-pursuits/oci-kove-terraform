@@ -8,14 +8,9 @@ output "public_subnet_ocid" {
   value       = local.public_subnet_id
 }
 
-output "management_subnet_ocid" {
-  description = "Private management subnet."
-  value       = local.management_subnet_id
-}
-
-output "rdma_subnet_ocid" {
-  description = "Private RDMA / BM primary VNIC subnet."
-  value       = local.rdma_subnet_id
+output "private_subnet_ocid" {
+  description = "Private subnet for management and BM resources."
+  value       = local.private_subnet_id
 }
 
 output "public_route_table_ocid" {
@@ -113,8 +108,7 @@ output "oke_prerequisites" {
     region                   = var.region
     vcn_id                   = local.vcn_id
     public_subnet_ocid       = local.public_subnet_id
-    management_subnet_ocid   = local.management_subnet_id
-    rdma_subnet_ocid         = local.rdma_subnet_id
+    private_subnet_ocid      = local.private_subnet_id
     public_route_table_ocid  = var.use_existing_vcn ? "" : module.networking[0].public_route_table_id
     private_route_table_ocid = var.use_existing_vcn ? "" : module.networking[0].private_route_table_id
     nsg_ocids                = []
