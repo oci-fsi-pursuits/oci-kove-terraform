@@ -68,7 +68,7 @@ locals {
   common_tags = module.labels.tags
 
   # Management cloud-init: default stub in-repo, or your file (e.g. under Downloads) via management_cloud_init_template_path.
-  management_cloud_init_src_path = trimspace(var.management_cloud_init_template_path) != "" ? var.management_cloud_init_template_path : "${path.module}/cloud_init/kove-rdma-cloud-init-standalone-runtime.txt"
+  management_cloud_init_src_path = trimspace(var.management_cloud_init_template_path) != "" ? var.management_cloud_init_template_path : "${path.module}/cloud_init/kove-xpd-cloud-init-standalone-runtime.txt"
 
   cloud_init_common_vars = merge(
     {

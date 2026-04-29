@@ -6,7 +6,7 @@ locals {
 
   deployment_mode = trimspace(var.deployment_mode)
 
-  default_cloud_init_path = "${path.module}/cloud_init/mc-host.yaml.tpl"
+  default_cloud_init_path = "${path.module}/cloud_init/kove-mc-cloud-init.yaml.tpl"
   cloud_init_src_path     = trimspace(var.cloud_init_template_path) != "" ? trimspace(var.cloud_init_template_path) : local.default_cloud_init_path
 
   rendered_user_data = replace(replace(

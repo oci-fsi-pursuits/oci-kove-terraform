@@ -197,7 +197,7 @@ variable "management_secondary_vnic_private_ip" {
 # ---------------------------------------------------------------------------
 variable "management_cloud_init_template_path" {
   type        = string
-  description = "Optional path to a cloud-init template. Empty = cloud_init/kove-rdma-cloud-init-standalone-runtime.txt. Secrets via rhsm_* and secrets.auto.tfvars. On Windows prefer forward slashes."
+  description = "Optional path to a cloud-init template. Empty = modules/xpd-cluster/cloud_init/kove-xpd-cloud-init-standalone-runtime.txt. Secrets via rhsm_* and secrets.auto.tfvars. On Windows prefer forward slashes."
   default     = ""
 }
 
