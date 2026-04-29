@@ -7,12 +7,12 @@ data "oci_core_vcns" "existing_vcns" {
 }
 
 data "oci_core_subnet" "existing_public" {
-  count     = var.use_existing_vcn ? 1 : 0
+  count     = trimspace(var.existing_public_subnet_id) != "" ? 1 : 0
   subnet_id = var.existing_public_subnet_id
 }
 
 data "oci_core_subnet" "existing_private" {
-  count     = var.use_existing_vcn ? 1 : 0
+  count     = trimspace(var.existing_private_subnet_id) != "" ? 1 : 0
   subnet_id = var.existing_private_subnet_id
 }
 

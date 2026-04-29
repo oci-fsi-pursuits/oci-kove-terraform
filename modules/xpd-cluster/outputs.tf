@@ -14,13 +14,13 @@ output "private_subnet_ocid" {
 }
 
 output "public_route_table_ocid" {
-  description = "Public route table when Terraform created the VCN (for attaching OKE API/LB subnets). Empty when use_existing_vcn is true."
-  value       = var.use_existing_vcn ? "" : module.networking[0].public_route_table_id
+  description = "Public route table OCID provided by caller."
+  value       = var.public_route_table_id
 }
 
 output "private_route_table_ocid" {
-  description = "Private (NAT) route table when Terraform created the VCN (for OKE worker subnet). Empty when use_existing_vcn is true."
-  value       = var.use_existing_vcn ? "" : module.networking[0].private_route_table_id
+  description = "Private (NAT) route table OCID provided by caller."
+  value       = var.private_route_table_id
 }
 
 output "bastion_public_ip" {
@@ -101,7 +101,7 @@ output "bm_console_vnc_connection_strings" {
 }
 
 output "oke_prerequisites" {
-  description = "Subnet, route tables, and compartment references for stig-hardened-builds/oke-cluster with use_existing_vcn (when this stack created the VCN)."
+  description = "Subnet, route tables, and compartment references for consumers such as OKE modules."
   value = {
     compartment_ocid         = var.compartment_ocid
     tenancy_ocid             = var.tenancy_ocid
@@ -109,8 +109,8 @@ output "oke_prerequisites" {
     vcn_id                   = local.vcn_id
     public_subnet_ocid       = local.public_subnet_id
     private_subnet_ocid      = local.private_subnet_id
-    public_route_table_ocid  = var.use_existing_vcn ? "" : module.networking[0].public_route_table_id
-    private_route_table_ocid = var.use_existing_vcn ? "" : module.networking[0].private_route_table_id
+    public_route_table_ocid  = var.public_route_table_id
+    private_route_table_ocid = var.private_route_table_id
     nsg_ocids                = []
   }
 }

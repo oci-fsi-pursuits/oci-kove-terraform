@@ -57,30 +57,9 @@ variable "availability_domain" {
   default     = ""
 }
 
-# ---------------------------------------------------------------------------
-# Networking: create VCN vs existing
-# ---------------------------------------------------------------------------
-variable "use_existing_vcn" {
-  type        = bool
-  description = "false = create VCN with public + private subnets; true = supply subnet OCIDs"
-  default     = false
-}
-
-variable "vcn_cidr_block" {
-  type        = string
-  description = "VCN CIDR when creating a new VCN. Subnets: /24 at indices 1 (public), 2 (private)."
-  default     = "10.0.0.0/16"
-}
-
-variable "private_subnet_name_prefix" {
-  type        = string
-  description = "Optional prefix added to private subnet display name when creating networking."
-  default     = ""
-}
-
 variable "existing_vcn_id" {
   type        = string
-  description = "Existing VCN OCID (informational output when using existing subnets)"
+  description = "VCN OCID provided by caller (root networking orchestration)."
   default     = ""
 }
 
@@ -96,22 +75,52 @@ variable "existing_private_subnet_id" {
   default     = ""
 }
 
+variable "private_subnet_name_prefix" {
+  type        = string
+  description = "Deprecated in xpd-cluster. Networking naming is now handled by root networking module orchestration."
+  default     = ""
+}
+
+variable "vcn_cidr_block" {
+  type        = string
+  description = "Deprecated in xpd-cluster. Networking CIDR is now handled by root networking module orchestration."
+  default     = ""
+}
+
+variable "use_existing_vcn" {
+  type        = bool
+  description = "Deprecated in xpd-cluster. Networking orchestration is now handled at root."
+  default     = true
+}
+
 variable "private_subnet_ssh_sources_extras" {
   type        = string
-  description = "Comma-separated CIDRs allowed SSH to private subnets in addition to VCN CIDR (when Terraform creates security lists)"
+  description = "Deprecated in xpd-cluster. Security list orchestration is now handled by root networking module."
   default     = ""
 }
 
 variable "ssh_ingress_cidr" {
   type        = string
-  description = "CIDR for TCP 22 (and optional 3000/5000) on the **public** subnet when Terraform creates the VCN — same role as oci-hpc `ssh_cidr`."
-  default     = "0.0.0.0/0"
+  description = "Deprecated in xpd-cluster. Security list orchestration is now handled by root networking module."
+  default     = ""
 }
 
 variable "public_ingress_hpc_ui_ports" {
   type        = bool
-  description = "When creating the VCN: allow TCP 3000 and 5000 from ssh_ingress_cidr on the public subnet (oci-hpc public security list)."
-  default     = true
+  description = "Deprecated in xpd-cluster. Security list orchestration is now handled by root networking module."
+  default     = false
+}
+
+variable "public_route_table_id" {
+  type        = string
+  description = "Public route table OCID supplied by caller."
+  default     = ""
+}
+
+variable "private_route_table_id" {
+  type        = string
+  description = "Private route table OCID supplied by caller."
+  default     = ""
 }
 
 # ---------------------------------------------------------------------------

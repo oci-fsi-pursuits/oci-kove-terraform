@@ -1,3 +1,17 @@
+module "networking" {
+  count  = var.use_existing_vcn ? 0 : 1
+  source = "./modules/networking"
+
+  compartment_id                    = var.compartment_ocid
+  vcn_cidr_block                    = var.vcn_cidr_block
+  private_subnet_name_prefix        = var.private_subnet_name_prefix
+  name_prefix                       = "${var.kove_namespace}-${var.kove_environment}-${var.kove_stack_name}"
+  freeform_tags                     = var.tags
+  ssh_ingress_cidr                  = var.ssh_ingress_cidr
+  public_ingress_hpc_ui_ports       = var.public_ingress_hpc_ui_ports
+  private_subnet_ssh_sources_extras = var.private_subnet_ssh_sources_extras
+}
+
 module "rdma_platform" {
   source = "./modules/xpd-cluster"
 
@@ -13,15 +27,11 @@ module "rdma_platform" {
   host_label_prefix   = var.host_label_prefix
   availability_domain = var.availability_domain
 
-  use_existing_vcn                  = var.use_existing_vcn
-  vcn_cidr_block                    = var.vcn_cidr_block
-  private_subnet_name_prefix        = var.private_subnet_name_prefix
-  existing_vcn_id                   = var.existing_vcn_id
-  existing_public_subnet_id         = var.existing_public_subnet_id
-  existing_private_subnet_id        = var.existing_private_subnet_id
-  private_subnet_ssh_sources_extras = var.private_subnet_ssh_sources_extras
-  ssh_ingress_cidr                  = var.ssh_ingress_cidr
-  public_ingress_hpc_ui_ports       = var.public_ingress_hpc_ui_ports
+  existing_vcn_id           = var.use_existing_vcn ? var.existing_vcn_id : module.networking[0].vcn_id
+  existing_public_subnet_id = var.use_existing_vcn ? var.existing_public_subnet_id : module.networking[0].public_subnet_id
+  existing_private_subnet_id = var.use_existing_vcn ? var.existing_private_subnet_id : module.networking[0].private_subnet_id
+  public_route_table_id      = var.use_existing_vcn ? "" : module.networking[0].public_route_table_id
+  private_route_table_id     = var.use_existing_vcn ? "" : module.networking[0].private_route_table_id
 
   enable_bastion     = var.enable_bastion
   bastion_shape      = var.bastion_shape

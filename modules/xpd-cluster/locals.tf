@@ -17,13 +17,12 @@ locals {
   rdma_host_label_prefix  = local.host_label_prefix != "" ? substr(local.host_label_prefix, 0, 8) : ""
   compute_system_hostname = local.rdma_host_label_prefix != "" ? "${local.rdma_host_label_prefix}csys" : "compsys"
 
-  vcn_id = var.use_existing_vcn ? var.existing_vcn_id : module.networking[0].vcn_id
+  vcn_id            = var.existing_vcn_id
+  public_subnet_id  = var.existing_public_subnet_id
+  private_subnet_id = var.existing_private_subnet_id
 
-  public_subnet_id  = var.use_existing_vcn ? var.existing_public_subnet_id : module.networking[0].public_subnet_id
-  private_subnet_id = var.use_existing_vcn ? var.existing_private_subnet_id : module.networking[0].private_subnet_id
-
-  private_subnet_ad = var.use_existing_vcn ? try(trimspace(data.oci_core_subnet.existing_private[0].availability_domain), "") : try(trimspace(module.networking[0].private_subnet_availability_domain), "")
-  public_subnet_ad  = var.use_existing_vcn ? try(trimspace(data.oci_core_subnet.existing_public[0].availability_domain), "") : try(trimspace(module.networking[0].public_subnet_availability_domain), "")
+  private_subnet_ad = try(trimspace(data.oci_core_subnet.existing_private[0].availability_domain), "")
+  public_subnet_ad  = try(trimspace(data.oci_core_subnet.existing_public[0].availability_domain), "")
 
   stack_ad = trimspace(var.availability_domain)
 

@@ -3,12 +3,12 @@ resource "oci_core_compute_cluster" "bm_compute" {
 
   lifecycle {
     precondition {
-      condition = !var.use_existing_vcn || (
+      condition = (
         length(trimspace(var.existing_vcn_id)) > 0 &&
         length(trimspace(var.existing_public_subnet_id)) > 0 &&
         length(trimspace(var.existing_private_subnet_id)) > 0
       )
-      error_message = "When use_existing_vcn is true, set existing_vcn_id, existing_public_subnet_id, and existing_private_subnet_id (non-empty)."
+      error_message = "existing_vcn_id, existing_public_subnet_id, and existing_private_subnet_id must be set (non-empty)."
     }
     precondition {
       condition     = local.use_compute_cluster_mode || !var.cluster_placement_group_enabled
