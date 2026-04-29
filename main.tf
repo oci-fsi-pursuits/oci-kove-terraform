@@ -27,6 +27,8 @@ module "rdma_platform" {
   host_label_prefix   = var.host_label_prefix
   availability_domain = var.availability_domain
 
+  use_existing_vcn = var.use_existing_vcn
+
   existing_vcn_id           = var.use_existing_vcn ? var.existing_vcn_id : module.networking[0].vcn_id
   existing_public_subnet_id = var.use_existing_vcn ? var.existing_public_subnet_id : module.networking[0].public_subnet_id
   existing_private_subnet_id = var.use_existing_vcn ? var.existing_private_subnet_id : module.networking[0].private_subnet_id
