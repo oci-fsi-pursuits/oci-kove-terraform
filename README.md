@@ -1,80 +1,118 @@
 # oci-kove-terraform
 
-Terraform modules and stack wrappers for deploying a Kove RDMA shared-memory platform on Oracle Cloud Infrastructure (OCI).
+Terraform configuration for deploying a Kove RDMA shared-memory platform on Oracle Cloud Infrastructure (OCI).
 
-## What this repo deploys
+## What This Deploys
 
-The RDMA platform deployment targets this topology:
+The root module can deploy:
 
-- 1 RDMA controller node
-- 2 memory nodes by default (`memory_node_count = 2`), with scale-out to `n+1`
-- Optional bastion VM in a public subnet
-- 1 management controller VM in a private subnet
-- Dedicated RDMA private subnet for bare metal nodes
+- OCI networking, or use existing subnets
+- XPD bare metal nodes with RDMA
+- Management Console (MC) KVM host VM
+- an optional bastion VM
 
-Management and bastion shapes can be configured as flex VMs, and custom image OCIDs are supported for both. Bare metal nodes use a required custom image (`bm_node_image_ocid`).
+The XPD/MC nodes use a required custom image:
 
-## Deployment options
+```hcl
+bm_node_image_ocid = "ocid1.image.oc1..REPLACE_ME"
+```
 
-| Option | Path | Notes |
-|---|---|---|
-| Networking only | `modules/networking` | Creates VCN, subnets, routes, gateways, and security lists only. |
-| Full RDMA platform | Root module (`main.tf`) using `modules/xpd-cluster` | Deploys bastion (optional), management VM, and RDMA nodes. |
-| OKE deployment | `modules/oke` | Cloud-native OKE cluster path, separate from bare-metal RDMA node deployment. |
+## Deployment Modes
 
-## RDMA deployment modes
+RDMA deployment modes:
 
-In `modules/xpd-cluster` and the root deployment module:
-
-- `rdma_deployment_mode = "compute_cluster"` (default)
-  - Creates a compute cluster.
-  - Creates 1 control BM plus `memory_node_count` memory BMs.
-- `rdma_deployment_mode = "cluster_network"`
-  - Creates 1 dedicated control BM.
-  - Creates a cluster network memory pool sized by `memory_node_count`.
-
-## Autoscaling behavior
-
-The RDMA stack supports OCI autoscaling configuration in `cluster_network` mode through module inputs (min/max/threshold/cooldown settings).
-
-## Cloud-init behavior
-
-Cloud-init templates in `modules/xpd-cluster/cloud_init` are used to:
-
-- bootstrap SSH access on RHEL images
-- optionally register RHSM credentials
-- install RDMA packages and configure OCI RDMA plugins
-
-## Repository layout
-
-| Path | Purpose |
+| Mode | Description |
 |---|---|
-| `modules/` | Reusable Terraform modules (`labels`, `networking`, `oke`, `xpd-cluster`, `mc-instance`). |
-| `docs/` | Internal project documents such as QA tracking logs. |
+| `compute_cluster` | Creates a compute cluster plus individual bare metal instances. |
+| `cluster_network` | Creates an OCI cluster network for the memory-node pool. |
 
-## Quick start
+MC host deployment modes:
 
-## Frankfurt prod xpd-cluster MC reference plan
+| Mode | Description |
+|---|---|
+| `custom_image` | Uses a prebuilt MC host image. |
+| `cloud_init_setup` | Uses a base image and lets cloud-init install/configure KVM and libvirt. |
 
-![Frankfurt prod xpd-cluster MC from plan](docs/images/frankfurt-prod-cluster-network-mc-from-plan.png)
+## Start Here
 
-### Full RDMA stack
+1. Copy the example variables file:
 
-1. Open `terraform.tfvars.example`.
-2. Copy to `terraform.tfvars` and set required values.
-3. Deploy:
+```bash
+cp terraform.tfvars.example terraform.tfvars
+```
 
-```powershell
+2. Edit `terraform.tfvars` for your tenancy, compartment, subnets, images, and deployment mode.
+
+3. Initialize and deploy:
+
+```bash
 terraform init
 terraform plan
 terraform apply
 ```
 
+## Documentation
+
+| Document | Use When |
+|---|---|
+| [Complete MC setup](docs/complete-mc-setup.md) | You need to finish MC guest import and validate MC access. |
+| [Complete MC setup with offline RPMs](docs/complete-mc-setup-offline.md) | The MC host installs packages from the offline RPM tarball. |
+| [Offline RPM install guide](docs/offline-rpm-install-guide.md) | You need the Object Storage links and `.tfvars` values for the RHEL 8.10 RPM tarball. |
+
+## Common Inputs
+
+Existing VCN deployment:
+
+```hcl
+use_existing_vcn           = true
+existing_vcn_id            = "ocid1.vcn.oc1..REPLACE_ME"
+existing_public_subnet_id  = "ocid1.subnet.oc1..REPLACE_ME"
+existing_private_subnet_id = "ocid1.subnet.oc1..REPLACE_ME"
+```
+
+RDMA cluster network deployment:
+
+```hcl
+rdma_deployment_mode = "cluster_network"
+memory_node_count    = 2
+```
+
+Dedicated MC host:
+
+```hcl
+enable_mc_instance = true
+mc_deployment_mode = "custom_image"
+mc_custom_image_ocid = "ocid1.image.oc1..REPLACE_ME"
+```
+
+Offline RPM tarball:
+
+```hcl
+offline_repo_tarball_url    = "https://object-storage-url/kove-rhel8.10-offline-rpms.tar.gz"
+offline_repo_tarball_sha256 = "REPLACE_WITH_SHA256"
+
+mc_offline_repo_tarball_url    = "https://object-storage-url/kove-rhel8.10-offline-rpms.tar.gz"
+mc_offline_repo_tarball_sha256 = "REPLACE_WITH_SHA256"
+```
+
 ## Requirements
 
-- Terraform >= 1.3
-- OCI provider >= 5.0
+- Terraform `>= 1.3`
+- OCI Terraform provider `>= 5.0`
+- OCI credentials with permission to create the selected resources
 
-## License
+## Repository Layout
 
-Use the license policy defined by your organization or parent project.
+| Path | Purpose |
+|---|---|
+| `main.tf` | Root deployment wrapper. |
+| `variables.tf` | Root input variables. |
+| `terraform.tfvars.example` | Example production-style variable file. |
+| `modules/xpd-cluster` | RDMA platform module. |
+| `modules/mc-instance` | Dedicated MC KVM host module. |
+| `modules/networking` | VCN, subnet, route, and security-list module. |
+| `docs` | End-user setup and offline RPM guides. |
+
+## Notes
+
+Do not commit `.tfvars`, Terraform state, generated plans, private keys, RPMs, or offline tarballs.

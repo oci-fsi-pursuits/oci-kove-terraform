@@ -1,6 +1,8 @@
-# labels
+# labels module
 
-No cloud resources — shared **tags** and **`name_prefix`** for consistent OCI `display_name` values.
+Creates a consistent naming prefix and freeform tag map for OCI resources.
+
+This module does not create cloud resources.
 
 ## Usage
 
@@ -10,21 +12,20 @@ module "labels" {
 
   namespace   = "kove"
   environment = "prod"
-  stack_name  = "rdma-ash"
+  stack_name  = "rdma"
 
   additional_tags = {
-    cost_center = "eng"
+    project = "rdma-platform"
   }
 }
-
-# Example display_name
-# display_name = "${module.labels.name_prefix}-vcn"
 ```
 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
-| `name_prefix` | e.g. `kove-prod-rdma-ash` |
-| `tags` | Map for `freeform_tags` on OCI resources |
-| `namespace`, `environment`, `stack_name` | Echo inputs for wiring |
+|---|---|
+| `name_prefix` | Combined prefix such as `kove-prod-rdma`. |
+| `tags` | Map for `freeform_tags` on OCI resources. |
+| `namespace` | Echo of the input namespace. |
+| `environment` | Echo of the input environment. |
+| `stack_name` | Echo of the input stack name. |

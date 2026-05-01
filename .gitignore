@@ -31,3 +31,6 @@ modules/xpd-cluster/README_ALIAS.md
 output/
 modules/oke/
 tfplan-*.bin
+
+# Local/generated tooling and offline RPM repos
+tools/

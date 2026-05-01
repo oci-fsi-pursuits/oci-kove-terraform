@@ -1,48 +1,60 @@
 # xpd-cluster module
 
-Reusable module to deploy the RDMA platform in **cluster network** mode on OCI.
+Deploys the RDMA platform on OCI.
 
 ## Components
 
-- Optional VCN creation (or use existing VCN/subnets)
-- Optional bastion VM in public subnet
-- Management controller VM in private subnet
-- RDMA node plane with:
-  - 1 control node
-  - N memory nodes (`memory_node_count`)
-  - role naming:
-    - `compute_system_name` (default `compute-system`) for control/orchestrator
-    - `xpd_name` (default `xpd`) for memory nodes
+- Optional VCN creation, or use of existing subnets
+- Optional bastion VM
+- Optional management VM
+- RDMA bare metal nodes
+- Optional cluster network memory-node pool
 
-## Cluster network deployment
+## RDMA deployment modes
 
-- Creates a dedicated control BM instance
-- Creates a cluster network memory pool sized by `memory_node_count`
+| Mode | Description |
+|---|---|
+| `compute_cluster` | Creates a compute cluster and individual bare metal instances. |
+| `cluster_network` | Creates a dedicated control bare metal instance and a cluster network for memory nodes. |
 
-## Autoscaling status
+## Required inputs
 
-Legacy management-node timer autoscaling in this module is deprecated and disabled.
+At minimum, provide:
 
-Use `modules/rdma-autoscale` for OCI-native autoscaling:
+```hcl
+tenancy_ocid     = "ocid1.tenancy.oc1..REPLACE_ME"
+compartment_ocid = "ocid1.compartment.oc1..REPLACE_ME"
+region           = "REPLACE_ME"
+ssh_public_key   = "ssh-rsa REPLACE_ME"
+bm_node_image_ocid = "ocid1.image.oc1..REPLACE_ME"
+```
 
-- OCI Function runtime
-- OCI Monitoring Alarm trigger
-- OCI Notifications wiring
-- IAM for function/resource principals
+For existing networking:
 
-## Key input categories
+```hcl
+use_existing_vcn           = true
+existing_vcn_id            = "ocid1.vcn.oc1..REPLACE_ME"
+existing_public_subnet_id  = "ocid1.subnet.oc1..REPLACE_ME"
+existing_private_subnet_id = "ocid1.subnet.oc1..REPLACE_ME"
+```
 
-- Core OCI identity and compartment settings
-- Networking mode (`use_existing_vcn` and subnet IDs)
-- Bastion and management VM shape/image options
-- RDMA BM shape and image options
-- RDMA deployment mode (`cluster_network`)
+## Cloud-init
+
+The module renders cloud-init for bastion, management, and RDMA nodes. Cloud-init can:
+
+- bootstrap SSH access
+- install required packages from configured package sources
+- install from an offline RPM repository tarball when provided
+- enable OCI RDMA agent plugins when requested
+
+For the offline RPM tarball workflow, see [../../docs/offline-rpm-install-guide.md](../../docs/offline-rpm-install-guide.md).
 
 ## Outputs
 
-Outputs include:
+Common outputs include:
 
-- network OCIDs
-- bastion and management addresses
-- control and memory node IDs/IPs
-- cluster network identifiers
+- subnet OCIDs
+- bastion public IP
+- management private IP
+- RDMA instance IDs and private IPs
+- cluster network ID when using `cluster_network`

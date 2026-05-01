@@ -1,11 +1,12 @@
 # Modules
 
+Reusable Terraform modules used by the root deployment.
+
 | Module | Purpose |
 |---|---|
-| [xpd-cluster](./xpd-cluster/) | Primary module for RDMA platform deployments (compute-cluster and cluster-network modes). |
-| [labels](./labels/) | Standard naming prefix and freeform tags. |
-| [mc-instance](./mc-instance/) | Dedicated MC KVM host VM with custom-image or cloud-init setup modes. |
+| [xpd-cluster](./xpd-cluster/) | RDMA platform deployment, including bastion, management VM, and bare metal RDMA nodes. |
+| [mc-instance](./mc-instance/) | Dedicated MC KVM host VM. |
 | [networking](./networking/) | VCN, public/private subnets, gateways, route tables, and security lists. |
-| [oke](./oke/) | OKE cluster and worker node pool on supplied networking. |
+| [labels](./labels/) | Shared naming prefix and freeform tags. |
 
-Use modules directly for custom compositions, or use stack wrappers in `stacks/` for opinionated deployments.
+Most users should deploy from the repo root instead of calling modules directly. Use direct module calls only for custom compositions.

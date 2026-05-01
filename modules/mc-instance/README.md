@@ -3,14 +3,16 @@
 Deploys a dedicated MC KVM host VM so MC lifecycle can be managed separately from the RDMA bare-metal stack.
 Cloud-init is applied in both deployment modes.
 
+For the end-to-end operator workflow, see [../../docs/complete-mc-setup.md](../../docs/complete-mc-setup.md). For offline package installation, see [../../docs/complete-mc-setup-offline.md](../../docs/complete-mc-setup-offline.md).
+
 ## Supported deployment modes
 
 - `custom_image`
   - Use a prebuilt custom image for the MC host.
   - Still runs cloud-init on first boot to apply the standardized MC host setup.
 - `cloud_init_setup`
-  - Uses Oracle Linux 8 (or `base_image_ocid`) and installs KVM/libvirt via cloud-init.
-  - Drops a helper script on the host to complete the guest import **manually** after you copy/convert the OVA.
+  - Uses a base image (`base_image_ocid`) and installs KVM/libvirt via cloud-init.
+  - Drops a helper script on the host to complete the guest import after you copy or convert the MC disk image.
 
 ## Defaults for MC host
 
@@ -47,7 +49,7 @@ Then it applies nftables DNAT/FORWARD rules for:
 
 This is wired as a systemd oneshot (`kove-mc-port-forwarding.service`) so forwarding is re-applied on boot.
 
-## Manual completion flow (`cloud_init_setup`)
+## Manual completion flow
 
 1. Copy OVA/qcow2 to the MC host.
 2. Convert to qcow2 if needed and place at `/var/lib/libvirt/images/kove-mc.qcow2`.
