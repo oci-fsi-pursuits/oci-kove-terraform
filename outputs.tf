@@ -19,15 +19,7 @@ output "private_route_table_ocid" {
 }
 
 output "bastion_public_ip" {
-  value = module.rdma_platform.bastion_public_ip
-}
-
-output "management_private_ip" {
-  value = module.rdma_platform.management_private_ip
-}
-
-output "management_secondary_vnic_id" {
-  value = module.rdma_platform.management_secondary_vnic_id
+  value = var.enable_bastion ? module.bastion[0].public_ip : null
 }
 
 output "compute_cluster_id" {
@@ -48,10 +40,6 @@ output "bm_instance_ids" {
 
 output "bm_private_ips" {
   value = module.rdma_platform.bm_private_ips
-}
-
-output "bm_control_private_ip" {
-  value = module.rdma_platform.bm_control_private_ip
 }
 
 output "bm_memory_private_ips" {
@@ -102,6 +90,14 @@ output "mc_private_ip" {
 
 output "mc_public_ip" {
   value = var.enable_mc_instance ? module.mc_instance[0].public_ip : null
+}
+
+output "compute_system_instance_id" {
+  value = var.enable_compute_system ? module.compute_system[0].instance_id : null
+}
+
+output "compute_system_private_ip" {
+  value = var.enable_compute_system ? module.compute_system[0].private_ip : null
 }
 
 output "mc_deployment_mode" {

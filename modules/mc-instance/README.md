@@ -1,6 +1,6 @@
 # mc-instance module
 
-Deploys a dedicated MC KVM host VM so MC lifecycle can be managed separately from the RDMA bare-metal stack.
+Deploys the MC instance. In the root deployment, this is the management VM.
 Cloud-init is applied in both deployment modes.
 
 For the end-to-end operator workflow, see [../../docs/complete-mc-setup.md](../../docs/complete-mc-setup.md). For offline package installation, see [../../docs/complete-mc-setup-offline.md](../../docs/complete-mc-setup-offline.md).
@@ -11,8 +11,10 @@ For the end-to-end operator workflow, see [../../docs/complete-mc-setup.md](../.
   - Use a prebuilt custom image for the MC host.
   - Still runs cloud-init on first boot to apply the standardized MC host setup.
 - `cloud_init_setup`
-  - Uses a base image (`base_image_ocid`) and installs KVM/libvirt via cloud-init.
+  - Uses a base image and installs KVM/libvirt via cloud-init.
   - Drops a helper script on the host to complete the guest import after you copy or convert the MC disk image.
+
+The root module resolves the MC image from `mc_custom_image_ocid` when set, otherwise `rhel8_10_image_ocid`.
 
 ## Defaults for MC host
 

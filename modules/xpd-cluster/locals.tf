@@ -6,16 +6,10 @@ locals {
 
   host_label_prefix = length(trimspace(var.host_label_prefix)) > 0 ? substr(replace(replace(lower(trimspace(var.host_label_prefix)), "-", ""), "_", ""), 0, 12) : ""
 
-  bastion_name            = "${local.name_prefix}-bastion"
-  management_name         = "${local.name_prefix}-management"
-  compute_cluster_name    = "${local.name_prefix}-compute-cluster"
-  bm_name_prefix          = "${local.name_prefix}-bm"
-  compute_system_name     = trimspace(var.compute_system_name)
-  xpd_name                = trimspace(var.xpd_name)
-  bastion_hostname        = local.host_label_prefix != "" ? "${local.host_label_prefix}bastion" : "bastion"
-  management_hostname     = local.host_label_prefix != "" ? "${local.host_label_prefix}mgmt" : "mgmt"
-  rdma_host_label_prefix  = local.host_label_prefix != "" ? substr(local.host_label_prefix, 0, 8) : ""
-  compute_system_hostname = local.rdma_host_label_prefix != "" ? "${local.rdma_host_label_prefix}csys" : "compsys"
+  compute_cluster_name   = "${local.name_prefix}-compute-cluster"
+  bm_name_prefix         = "${local.name_prefix}-bm"
+  xpd_name               = trimspace(var.xpd_name)
+  rdma_host_label_prefix = local.host_label_prefix != "" ? substr(local.host_label_prefix, 0, 8) : ""
 
   vcn_id            = var.existing_vcn_id
   public_subnet_id  = var.existing_public_subnet_id
@@ -39,35 +33,16 @@ locals {
     chomp(trimspace(replace(tls_private_key.cluster_ssh.public_key_openssh, "\r", ""))),
   ]))
 
-  bm_total_count           = 1 + var.memory_node_count
   use_compute_cluster_mode = trimspace(var.rdma_deployment_mode) == "compute_cluster"
   use_cluster_network_mode = trimspace(var.rdma_deployment_mode) == "cluster_network"
   cluster_network_memory_instance_ids = local.use_cluster_network_mode ? [
     for instance in data.oci_core_cluster_network_instances.rdma[0].instances : instance["id"]
   ] : []
-  cluster_network_memory_private_ips  = local.use_cluster_network_mode ? data.oci_core_instance.cluster_network_instances[*].private_ip : []
-  cluster_network_control_instance_id = local.use_cluster_network_mode ? oci_core_instance.cluster_network_control[0].id : null
-  cluster_network_control_private_ip  = local.use_cluster_network_mode ? oci_core_instance.cluster_network_control[0].private_ip : null
-  cluster_network_instance_ids = local.use_cluster_network_mode ? concat(
-    compact([local.cluster_network_control_instance_id]),
-    local.cluster_network_memory_instance_ids,
-  ) : []
-  cluster_network_instance_private_ips = local.use_cluster_network_mode ? concat(
-    compact([local.cluster_network_control_private_ip]),
-    local.cluster_network_memory_private_ips,
-  ) : []
-
-  management_secondary_vnic_subnet_id_effective = trimspace(var.management_secondary_vnic_subnet_id) != "" ? trimspace(var.management_secondary_vnic_subnet_id) : local.private_subnet_id
-
-  ol8_image_id = length(data.oci_core_images.ol8_flex.images) > 0 ? data.oci_core_images.ol8_flex.images[0].id : ""
-
-  bastion_image_id    = trimspace(var.bastion_image_ocid) != "" ? var.bastion_image_ocid : local.ol8_image_id
-  management_image_id = trimspace(var.management_image_ocid) != "" ? var.management_image_ocid : local.ol8_image_id
+  cluster_network_memory_private_ips = local.use_cluster_network_mode ? data.oci_core_instance.cluster_network_instances[*].private_ip : []
 
   common_tags = module.labels.tags
 
-  # Management cloud-init: default stub in-repo, or your file (e.g. under Downloads) via management_cloud_init_template_path.
-  management_cloud_init_src_path = trimspace(var.management_cloud_init_template_path) != "" ? var.management_cloud_init_template_path : "${path.module}/cloud_init/kove-xpd-cloud-init-standalone-runtime.txt"
+  cloud_init_src_path = "${path.module}/cloud_init/kove-xpd-cloud-init-standalone-runtime.txt"
 
   cloud_init_common_vars = merge(
     {
@@ -88,28 +63,12 @@ locals {
     var.cloud_init_template_extra_vars,
   )
 
-  bastion_cloud_init_vars = merge(local.cloud_init_common_vars, { node_role = "bastion" })
-  management_cloud_init_vars = merge(local.cloud_init_common_vars, {
-    node_role = "management"
-  })
-  bm_cloud_init_vars = merge(local.cloud_init_common_vars, { node_role = "bm" })
-
-  bastion_user_data_rendered = replace(replace(
-    templatefile(local.management_cloud_init_src_path, local.bastion_cloud_init_vars),
-    "\r\n", "\n"),
-  "\r", "\n")
-
-  management_user_data_rendered = replace(replace(
-    templatefile(local.management_cloud_init_src_path, local.management_cloud_init_vars),
-    "\r\n", "\n"),
-  "\r", "\n")
+  bm_cloud_init_vars = merge(local.cloud_init_common_vars, { node_role = "memory" })
 
   bm_user_data_rendered = replace(replace(
-    templatefile(local.management_cloud_init_src_path, local.bm_cloud_init_vars),
+    templatefile(local.cloud_init_src_path, local.bm_cloud_init_vars),
     "\r\n", "\n"),
   "\r", "\n")
 
-  bastion_user_data_b64    = base64encode(local.bastion_user_data_rendered)
-  management_user_data_b64 = base64encode(local.management_user_data_rendered)
-  bm_user_data_b64         = base64encode(local.bm_user_data_rendered)
+  bm_user_data_b64 = base64encode(local.bm_user_data_rendered)
 }

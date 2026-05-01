@@ -42,6 +42,12 @@ variable "kove_stack_name" {
   default     = "rdma"
 }
 
+variable "name_prefix_override" {
+  type        = string
+  description = "Optional explicit prefix for MC display_name fields. Empty uses labels default composition."
+  default     = ""
+}
+
 variable "tags" {
   type        = map(string)
   description = "Extra freeform tags."

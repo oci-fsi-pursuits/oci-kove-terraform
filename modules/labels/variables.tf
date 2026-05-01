@@ -30,6 +30,12 @@ variable "stack_name" {
   }
 }
 
+variable "name_prefix_override" {
+  type        = string
+  description = "Optional explicit name prefix override for display_name fields. Empty uses namespace/environment/stack_name composition."
+  default     = ""
+}
+
 variable "additional_tags" {
   type        = map(string)
   description = "Extra freeform tags merged after standard tags."

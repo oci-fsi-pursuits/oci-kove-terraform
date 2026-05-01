@@ -30,12 +30,3 @@ data "oci_core_instance" "cluster_network_instances" {
 
   instance_id = data.oci_core_cluster_network_instances.rdma[0].instances[count.index]["id"]
 }
-
-data "oci_core_images" "ol8_flex" {
-  compartment_id           = var.compartment_ocid
-  operating_system         = "Oracle Linux"
-  operating_system_version = "8"
-  shape                    = "VM.Standard.E6.Flex"
-  sort_by                  = "TIMECREATED"
-  sort_order               = "DESC"
-}

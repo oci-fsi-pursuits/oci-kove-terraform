@@ -8,6 +8,8 @@ locals {
     var.additional_tags,
   )
 
-  # Single prefix for display_name fields: kove-prod-rdma-ash
-  name_prefix = join("-", compact([var.namespace, var.environment, var.stack_name]))
+  # Single prefix for display_name fields.
+  # If name_prefix_override is set, use it as-is.
+  # Otherwise compose from namespace/environment/stack_name and remove duplicates.
+  name_prefix = trimspace(var.name_prefix_override) != "" ? trimspace(var.name_prefix_override) : join("-", distinct(compact([var.namespace, var.environment, var.stack_name])))
 }

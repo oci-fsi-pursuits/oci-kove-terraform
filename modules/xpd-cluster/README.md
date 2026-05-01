@@ -1,46 +1,58 @@
-# xpd-cluster module
+# xpd-cluster Module
 
-Deploys the RDMA platform on OCI.
+Creates the RDMA memory-node infrastructure only.
 
-## Components
+This module no longer creates a bastion, a management VM, or the single `compute-system` BM. Those are owned by sibling modules at the root:
 
-- Optional VCN creation, or use of existing subnets
-- Optional bastion VM
-- Optional management VM
-- RDMA bare metal nodes
-- Optional cluster network memory-node pool
+- `modules/mc-instance` for the MC/management instance
+- `modules/bastion` for the optional jump host
+- `modules/compute-system` for the optional single BM node
 
-## RDMA deployment modes
+## RDMA Deployment Mode
 
-| Mode | Description |
-|---|---|
-| `compute_cluster` | Creates a compute cluster and individual bare metal instances. |
-| `cluster_network` | Creates a dedicated control bare metal instance and a cluster network for memory nodes. |
+This module is documented for production `cluster_network` use.
 
-## Required inputs
+- `cluster_network`: creates an OCI cluster network with a memory pool sized by `memory_node_count`.
+
+## Cluster Placement Group
+
+Placement group controls are configured on this module interface (typically passed through from root):
+
+```hcl
+cluster_placement_group_enabled     = true
+cluster_placement_group_type        = "STANDARD"
+cluster_placement_group_name        = "kove-rdma-cpg"
+cluster_placement_group_description = "RDMA bare metal placement group"
+```
+
+If omitted, defaults apply and placement groups are not created.
+
+> ⚠️ Capacity warning
+> Cluster placement groups can reduce placement flexibility. In constrained AD/FD capacity conditions, enabling them may increase launch delays or capacity-related provisioning failures.
+
+## Required Inputs
 
 At minimum, provide:
 
 ```hcl
-tenancy_ocid     = "ocid1.tenancy.oc1..REPLACE_ME"
-compartment_ocid = "ocid1.compartment.oc1..REPLACE_ME"
-region           = "REPLACE_ME"
-ssh_public_key   = "ssh-rsa REPLACE_ME"
-bm_node_image_ocid = "ocid1.image.oc1..REPLACE_ME"
-```
-
-For existing networking:
-
-```hcl
-use_existing_vcn           = true
-existing_vcn_id            = "ocid1.vcn.oc1..REPLACE_ME"
+tenancy_ocid          = "ocid1.tenancy.oc1..REPLACE_ME"
+compartment_ocid      = "ocid1.compartment.oc1..REPLACE_ME"
+region                = "REPLACE_ME"
+ssh_public_key        = "ssh-rsa REPLACE_ME"
+bm_node_image_ocid    = "ocid1.image.oc1..REPLACE_ME"
+existing_vcn_id       = "ocid1.vcn.oc1..REPLACE_ME"
 existing_public_subnet_id  = "ocid1.subnet.oc1..REPLACE_ME"
 existing_private_subnet_id = "ocid1.subnet.oc1..REPLACE_ME"
 ```
 
-## Cloud-init
+The root module resolves `bm_node_image_ocid` from:
 
-The module renders cloud-init for bastion, management, and RDMA nodes. Cloud-init can:
+- `bm_node_custom_image_ocid` when set
+- otherwise `rhel8_10_image_ocid`
+
+## Cloud-Init
+
+The module renders cloud-init for RDMA memory nodes. Cloud-init can:
 
 - bootstrap SSH access
 - install required packages from configured package sources
@@ -54,7 +66,5 @@ For the offline RPM tarball workflow, see [../../docs/offline-rpm-install-guide.
 Common outputs include:
 
 - subnet OCIDs
-- bastion public IP
-- management private IP
-- RDMA instance IDs and private IPs
+- RDMA memory-node instance IDs and private IPs
 - cluster network ID when using `cluster_network`

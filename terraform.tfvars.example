@@ -1,5 +1,5 @@
-# Recommended template: existing VCN + cluster_network + bastion + MC host (Frankfurt-style)
-# Copy to terraform.tfvars (or use -var-file) and fill placeholders. Do not commit secrets.
+# Recommended template: existing VCN + cluster_network + bastion + MC/management.
+# Copy to terraform.tfvars or use -var-file. Do not commit secrets.
 
 tenancy_ocid     = "ocid1.tenancy.oc1..REPLACE_ME"
 region           = "eu-frankfurt-1"
@@ -14,6 +14,12 @@ kove_environment  = "prod"
 kove_stack_name   = "rdma"
 host_label_prefix = "fra"
 
+# Optional per-role display-name prefixes. Leave empty to use composed labels prefix.
+# bastion_name_prefix        = "fra-bastion"
+# mc_name_prefix             = "fra-mc"
+# compute_system_name_prefix = "fra-csys"
+# xpd_name_prefix            = "fra-xpd"
+
 tags = {
   project = "rdma-platform"
   env     = "prod"
@@ -22,17 +28,34 @@ tags = {
 # Example: pILZ:EU-FRANKFURT-1-AD-2
 availability_domain = "REPLACE_ME"
 
-use_existing_vcn              = true
-existing_vcn_id               = "ocid1.vcn.oc1.eu-frankfurt-1.REPLACE_ME"
-existing_public_subnet_id     = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
-existing_private_subnet_id    = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+use_existing_vcn           = true
+existing_vcn_id            = "ocid1.vcn.oc1.eu-frankfurt-1.REPLACE_ME"
+existing_public_subnet_id  = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+existing_private_subnet_id = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# RDMA / BM plane
-bm_node_image_ocid   = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
+# Images: one shared RHEL 8.10 base image, with optional per-role overrides.
+rhel8_10_image_ocid        = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
+bm_node_custom_image_ocid  = ""
+mc_custom_image_ocid       = ""
+bastion_custom_image_ocid  = ""
+
+# RDMA memory-node infrastructure.
 rdma_deployment_mode = "cluster_network"
 memory_node_count    = 2
+xpd_name             = "xpd"
 
-# Cluster-network autoscaling (memory metric)
+# Optional compute-system BM. Disable this without affecting memory nodes.
+enable_compute_system = true
+compute_system_name   = "compute-system"
+
+# Optional RDMA cluster placement group (xpd-cluster).
+# WARNING: can reduce placement flexibility and increase capacity-related launch failures in constrained AD/FD conditions.
+# cluster_placement_group_enabled     = true
+# cluster_placement_group_type        = "STANDARD"
+# cluster_placement_group_name        = "kove-rdma-cpg"
+# cluster_placement_group_description = "RDMA bare metal placement group"
+
+# Cluster-network autoscaling.
 cluster_network_enable_autoscaling                      = true
 cluster_network_autoscaling_min_nodes                   = 2
 cluster_network_autoscaling_max_nodes                   = 8
@@ -51,45 +74,34 @@ cluster_network_create_timeout = "2h"
 bm_imds_ssh_key_bootstrap      = true
 create_bm_console_connections  = false
 
-# Role naming
-compute_system_name = "compute-system"
-xpd_name            = "xpd"
-
-# Bastion
+# Bastion jump host.
 enable_bastion = true
 
-# MC host (separate instance)
-enable_management_instance  = false
-enable_mc_instance          = true
-mc_shape                    = "VM.Standard3.Flex"
-mc_ocpus                    = 3
-mc_memory_gbs               = 32
-mc_assign_public_ip         = false
-mc_subnet_id                = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+# MC instance. This is the management VM.
+enable_mc_instance  = true
+mc_shape            = "VM.Standard3.Flex"
+mc_ocpus            = 3
+mc_memory_gbs       = 32
+mc_assign_public_ip = false
+mc_subnet_id        = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# Optional secondary VNIC controls
-# mc_secondary_vnic_subnet_id = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
+# Optional secondary VNIC controls for the MC instance.
+# mc_secondary_vnic_subnet_id  = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 # mc_secondary_vnic_private_ip = "10.0.2.58"
 mc_secondary_vnic_interface = "eth1"
 
-# MC deployment mode (recommended)
-mc_deployment_mode   = "custom_image"
-mc_custom_image_ocid = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
+# MC deployment mode.
+mc_deployment_mode = "custom_image"
 
-# Alternate mode (optional advanced path)
+# Alternate mode for building MC host dependencies with cloud-init.
 # mc_deployment_mode = "cloud_init_setup"
-# mc_base_image_ocid = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# RHSM values for cloud-init based flows
-# Conditionally required: set both when your image/bootstrap needs RHSM-entitled RHEL repos.
-# If your custom image is already pre-entitled (or doesn't need RHSM), these can stay unset.
+# RHSM values for cloud-init based flows.
 # rhsm_org_id         = "REPLACE_ME"
 # rhsm_activation_key = "REPLACE_ME"
 
 # Offline RPM repo tarballs for cloud-init based flows.
-# The tarball must contain a createrepo-generated repo, including repodata/repomd.xml.
-# Use an Object Storage PAR URL for private-OCI/no-public-internet installs, or a pre-baked local path for fully offline images.
-# offline_repo_tarball_url    = "https://objectstorage.REGION.oraclecloud.com/p/REPLACE_ME/n/NAMESPACE/b/BUCKET/o/rdma-rpms.tar.gz"
+# offline_repo_tarball_url    = "https://objectstorage.REGION.oraclecloud.com/p/REPLACE_ME/n/NAMESPACE/b/BUCKET/o/kove-rhel8.10-offline-rpms.tar.gz"
 # offline_repo_tarball_sha256 = "REPLACE_ME"
-# mc_offline_repo_tarball_url    = "https://objectstorage.REGION.oraclecloud.com/p/REPLACE_ME/n/NAMESPACE/b/BUCKET/o/mc-rpms.tar.gz"
+# mc_offline_repo_tarball_url    = "https://objectstorage.REGION.oraclecloud.com/p/REPLACE_ME/n/NAMESPACE/b/BUCKET/o/kove-rhel8.10-offline-rpms.tar.gz"
 # mc_offline_repo_tarball_sha256 = "REPLACE_ME"

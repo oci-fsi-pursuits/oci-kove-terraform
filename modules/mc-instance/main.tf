@@ -4,6 +4,7 @@ module "labels" {
   namespace   = var.kove_namespace
   environment = var.kove_environment
   stack_name  = local.labels_stack_name
+  name_prefix_override = var.name_prefix_override
 
   additional_tags = merge(var.tags, {
     workload = "mc-host"

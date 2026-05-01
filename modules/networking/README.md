@@ -10,4 +10,9 @@ Creates a dedicated VCN with:
 
 Use `private_subnet_name_prefix` to prepend a custom prefix to the private subnet display name.
 
+Cluster placement groups are **not** configured in this module. They are part of RDMA compute placement and are configured via `modules/xpd-cluster` inputs (`cluster_placement_group_*`) at root.
+
+> ⚠️ Capacity warning
+> Cluster placement groups can reduce placement flexibility. In constrained AD/FD capacity conditions, enabling them may increase launch delays or capacity-related provisioning failures.
+
 Does **not** handle attaching to an existing VCN; the stack passes through existing subnet OCIDs when `use_existing_vcn = true`.

@@ -1,5 +1,5 @@
 title: "Kove RDMA Platform"
-description: "Bare metal RDMA infrastructure stack: optional bastion, management VM, and VCN/new or existing subnets."
+description: "Kove RDMA platform with one MC/management instance, RDMA memory nodes, optional compute-system BM, optional bastion, and new or existing OCI networking."
 schemaVersion: 1.1.0
 version: "20190304"
 locale: "en"
@@ -15,7 +15,10 @@ variableGroups:
     variables:
       - compartment_ocid
       - ssh_public_key
-      - bm_node_image_ocid
+      - rhel8_10_image_ocid
+      - bm_node_custom_image_ocid
+      - mc_custom_image_ocid
+      - bastion_custom_image_ocid
 
   - title: "Topology"
     variables:
@@ -26,11 +29,11 @@ variableGroups:
       - availability_domain
       - rdma_deployment_mode
       - memory_node_count
+      - enable_compute_system
       - compute_system_name
       - xpd_name
       - enable_bastion
       - enable_mc_instance
-      - create_bm_console_connections
 
   - title: "Networking"
     variables:
@@ -38,37 +41,12 @@ variableGroups:
       - vcn_cidr_block
       - existing_vcn_id
       - existing_public_subnet_id
-      - existing_management_subnet_id
-      - existing_rdma_subnet_id
+      - existing_private_subnet_id
       - ssh_ingress_cidr
       - public_ingress_hpc_ui_ports
       - private_subnet_ssh_sources_extras
 
-  - title: "RHSM / management cloud-init"
-    variables:
-      - rhsm_org_id
-      - rhsm_activation_key
-      - playbooks_zip_url
-      - management_cloud_init_template_path
-
-  - title: "Bastion VM"
-    variables:
-      - bastion_shape
-      - bastion_ocpus
-      - bastion_memory_gbs
-      - bastion_image_ocid
-
-  - title: "Management VM"
-    variables:
-      - management_shape
-      - management_ocpus
-      - management_memory_gbs
-      - management_image_ocid
-      - management_secondary_vnic_enabled
-      - management_secondary_vnic_subnet_id
-      - management_secondary_vnic_private_ip
-
-  - title: "MC host VM (optional)"
+  - title: "MC / management instance"
     variables:
       - mc_shape
       - mc_ocpus
@@ -77,9 +55,10 @@ variableGroups:
       - mc_assign_public_ip
       - mc_subnet_id
       - mc_availability_domain
+      - mc_secondary_vnic_enabled
+      - mc_secondary_vnic_subnet_id
+      - mc_secondary_vnic_private_ip
       - mc_deployment_mode
-      - mc_custom_image_ocid
-      - mc_base_image_ocid
       - mc_cloud_init_template_path
       - mc_setup_script_path
       - mc_guest_vm_name
@@ -87,7 +66,13 @@ variableGroups:
       - mc_guest_vcpus
       - mc_guest_memory_mb
 
-  - title: "Bare metal (RDMA plane)"
+  - title: "Bastion"
+    variables:
+      - bastion_shape
+      - bastion_ocpus
+      - bastion_memory_gbs
+
+  - title: "Bare metal"
     variables:
       - bm_node_shape
       - bm_boot_volume_size_gbs
@@ -98,10 +83,34 @@ variableGroups:
       - bm_imds_ssh_key_bootstrap
       - bm_capacity_reservation_id
       - cluster_network_create_timeout
+      - create_bm_console_connections
+
+  - title: "Offline RPMs and cloud-init"
+    variables:
+      - rhsm_org_id
+      - rhsm_activation_key
+      - playbooks_zip_url
+      - offline_repo_tarball_url
+      - offline_repo_tarball_sha256
+      - mc_offline_repo_tarball_url
+      - mc_offline_repo_tarball_sha256
 
   - title: "Advanced"
     variables:
       - identity_home_region
+      - cluster_placement_group_enabled
+      - cluster_placement_group_type
+      - cluster_placement_group_name
+      - cluster_placement_group_description
+      - cluster_network_enable_autoscaling
+      - cluster_network_autoscaling_min_nodes
+      - cluster_network_autoscaling_max_nodes
+      - cluster_network_autoscaling_initial_nodes
+      - cluster_network_autoscaling_cooldown_seconds
+      - cluster_network_autoscaling_scale_out_threshold_percent
+      - cluster_network_autoscaling_scale_in_threshold_percent
+      - cluster_network_autoscaling_scale_out_by
+      - cluster_network_autoscaling_scale_in_by
 
 variables:
   tenancy_ocid:
@@ -114,16 +123,16 @@ variables:
   region:
     type: string
     title: "Region"
-    description: "Set automatically when you create the stack in Resource Manager (e.g. us-phoenix-1)."
+    description: "Set automatically when you create the stack in Resource Manager."
     required: true
     visible: false
 
   identity_home_region:
     type: string
     title: "Identity home region"
-    description: "Home region for IAM API calls when it differs from region (e.g. us-phoenix-1)."
-    required: false
+    description: "Home region for IAM API calls when it differs from region."
     default: "us-phoenix-1"
+    required: false
 
   compartment_ocid:
     type: string
@@ -134,75 +143,98 @@ variables:
   ssh_public_key:
     type: string
     title: "SSH public key"
-    description: "Paste your public key (OpenSSH format). Injected on VMs and combined with generated keys on BMs."
+    description: "Paste your public key in OpenSSH format."
     required: true
 
-  bm_node_image_ocid:
+  rhel8_10_image_ocid:
     type: string
-    title: "BM node image OCID"
-    description: "Custom image OCID for control and memory bare metal nodes."
+    title: "RHEL 8.10 image OCID"
+    description: "Shared base RHEL 8.10 image for MC, bastion, compute-system, and RDMA memory nodes."
     required: true
+
+  bm_node_custom_image_ocid:
+    type: string
+    title: "BM custom image OCID"
+    description: "Optional override for RDMA memory nodes and compute-system. Empty uses the shared RHEL 8.10 image."
+    default: ""
+    required: false
+
+  mc_custom_image_ocid:
+    type: string
+    title: "MC custom image OCID"
+    description: "Optional override for the MC/management instance. Empty uses the shared RHEL 8.10 image."
+    default: ""
+    required: false
+
+  bastion_custom_image_ocid:
+    type: string
+    title: "Bastion custom image OCID"
+    description: "Optional override for the bastion. Empty uses the shared RHEL 8.10 image."
+    default: ""
+    required: false
 
   kove_namespace:
     type: string
-    title: "Namespace (naming)"
-    description: "Short prefix for tags and display names (e.g. kove)."
+    title: "Namespace"
     default: "kove"
     required: false
 
   kove_environment:
     type: string
     title: "Environment"
-    description: "e.g. dev, staging, prod — part of resource name prefix."
     default: "dev"
     required: false
 
   kove_stack_name:
     type: string
     title: "Stack name"
-    description: "Logical stack id (e.g. rdma, rdma-ash). Combined as namespace-environment-stack_name."
     default: "rdma"
     required: false
 
   host_label_prefix:
     type: string
-    title: "Hostname label prefix (optional)"
+    title: "Hostname label prefix"
     default: ""
     required: false
 
   availability_domain:
     type: string
-    title: "Availability domain (optional)"
-    description: "e.g. pILZ:PHX-AD-2. Leave empty to derive from subnets or tenancy."
-    required: false
+    title: "Availability domain"
+    description: "Leave empty to derive from subnets or tenancy."
     default: ""
-
-  memory_node_count:
-    type: number
-    title: "Memory node count"
-    default: 2
-    required: false
-
-  compute_system_name:
-    type: string
-    title: "Compute system role label"
-    description: "Used in RDMA control-node display names."
-    default: "compute-system"
-    required: false
-
-  xpd_name:
-    type: string
-    title: "XPD role label"
-    description: "Used in RDMA memory-node display names."
-    default: "xpd"
     required: false
 
   rdma_deployment_mode:
     type: string
     title: "RDMA deployment mode"
-    description: "compute_cluster (individual BM nodes) or cluster_network (cluster network instance pool)."
-    required: false
+    description: "compute_cluster or cluster_network."
     default: "compute_cluster"
+    required: false
+
+  memory_node_count:
+    type: number
+    title: "RDMA memory node count"
+    default: 2
+    required: false
+
+  enable_compute_system:
+    type: boolean
+    title: "Create compute-system BM"
+    description: "Creates the optional single BM node labeled compute-system."
+    default: true
+    required: false
+
+  compute_system_name:
+    type: string
+    title: "Compute-system role label"
+    default: "compute-system"
+    required: false
+
+  xpd_name:
+    type: string
+    title: "Memory-node role label"
+    default: "xpd"
+    required: false
 
   enable_bastion:
     type: boolean
@@ -212,22 +244,19 @@ variables:
 
   enable_mc_instance:
     type: boolean
-    title: "Create MC host VM"
-    description: "Deploy a separate MC KVM host VM in addition to the RDMA platform."
-    default: false
+    title: "Create MC/management instance"
+    default: true
     required: false
 
   use_existing_vcn:
     type: boolean
     title: "Use existing VCN/subnets"
-    description: "If true, provide existing VCN + 3 subnet OCIDs."
     default: false
     required: false
 
   vcn_cidr_block:
     type: string
-    title: "VCN CIDR (new VCN mode)"
-    description: "Used when creating a new VCN (1 public subnet + 2 private subnets)."
+    title: "VCN CIDR"
     default: "10.0.0.0/16"
     required: false
     visible:
@@ -238,8 +267,8 @@ variables:
   existing_vcn_id:
     type: string
     title: "Existing VCN OCID"
-    required: false
     default: ""
+    required: false
     visible:
       eq:
         - use_existing_vcn
@@ -248,28 +277,18 @@ variables:
   existing_public_subnet_id:
     type: string
     title: "Existing public subnet OCID"
-    required: false
     default: ""
+    required: false
     visible:
       eq:
         - use_existing_vcn
         - true
 
-  existing_management_subnet_id:
+  existing_private_subnet_id:
     type: string
-    title: "Existing management subnet OCID"
-    required: false
+    title: "Existing private subnet OCID"
     default: ""
-    visible:
-      eq:
-        - use_existing_vcn
-        - true
-
-  existing_rdma_subnet_id:
-    type: string
-    title: "Existing RDMA subnet OCID"
     required: false
-    default: ""
     visible:
       eq:
         - use_existing_vcn
@@ -277,7 +296,7 @@ variables:
 
   ssh_ingress_cidr:
     type: string
-    title: "SSH ingress CIDR (public subnet)"
+    title: "SSH ingress CIDR"
     default: "0.0.0.0/0"
     required: false
 
@@ -293,22 +312,117 @@ variables:
     default: ""
     required: false
 
-  management_shape:
+  mc_shape:
     type: string
-    title: "Management shape"
-    default: "VM.Standard.E6.Flex"
+    title: "MC shape"
+    default: "VM.Standard3.Flex"
     required: false
 
-  management_ocpus:
+  mc_ocpus:
     type: number
-    title: "Management OCPUs"
+    title: "MC OCPUs"
+    default: 3
+    required: false
+
+  mc_memory_gbs:
+    type: number
+    title: "MC memory (GB)"
+    default: 32
+    required: false
+
+  mc_boot_volume_size_gbs:
+    type: number
+    title: "MC boot volume size (GB)"
+    default: 200
+    required: false
+
+  mc_assign_public_ip:
+    type: boolean
+    title: "Assign public IP to MC"
+    default: false
+    required: false
+
+  mc_subnet_id:
+    type: string
+    title: "MC subnet OCID"
+    description: "Leave empty to use the private subnet."
+    default: ""
+    required: false
+
+  mc_availability_domain:
+    type: string
+    title: "MC availability domain"
+    description: "Leave empty to use the platform AD."
+    default: ""
+    required: false
+
+  mc_secondary_vnic_enabled:
+    type: boolean
+    title: "Attach MC secondary VNIC"
+    default: false
+    required: false
+
+  mc_secondary_vnic_subnet_id:
+    type: string
+    title: "MC secondary VNIC subnet OCID"
+    default: ""
+    required: false
+    visible:
+      eq:
+        - mc_secondary_vnic_enabled
+        - true
+
+  mc_secondary_vnic_private_ip:
+    type: string
+    title: "MC secondary VNIC private IP"
+    default: ""
+    required: false
+    visible:
+      eq:
+        - mc_secondary_vnic_enabled
+        - true
+
+  mc_deployment_mode:
+    type: string
+    title: "MC deployment mode"
+    description: "custom_image or cloud_init_setup."
+    default: "custom_image"
+    required: false
+
+  mc_cloud_init_template_path:
+    type: string
+    title: "MC cloud-init template path"
+    default: ""
+    required: false
+
+  mc_setup_script_path:
+    type: string
+    title: "MC setup script path"
+    default: "/opt/kove/setup-kove-mc.sh"
+    required: false
+
+  mc_guest_vm_name:
+    type: string
+    title: "MC guest VM name"
+    default: "kove-mc"
+    required: false
+
+  mc_guest_disk_path:
+    type: string
+    title: "MC guest qcow2 path"
+    default: "/var/lib/libvirt/images/kove-mc.qcow2"
+    required: false
+
+  mc_guest_vcpus:
+    type: number
+    title: "MC guest vCPUs"
     default: 2
     required: false
 
-  management_memory_gbs:
+  mc_guest_memory_mb:
     type: number
-    title: "Management memory (GB)"
-    default: 16
+    title: "MC guest memory (MB)"
+    default: 8192
     required: false
 
   bastion_shape:
@@ -327,13 +441,6 @@ variables:
     type: number
     title: "Bastion memory (GB)"
     default: 16
-    required: false
-
-  create_bm_console_connections:
-    type: boolean
-    title: "Enable BM console/VNC connections"
-    description: "Creates OCI instance console connections for each BM node. Network topology remains 1 public subnet + 2 private subnets in new VCN mode."
-    default: false
     required: false
 
   bm_node_shape:
@@ -366,275 +473,6 @@ variables:
     default: "NPS1"
     required: false
 
-  management_image_ocid:
-    type: string
-    title: "Management image OCID"
-    description: "Optional custom image for the management VM. Empty selects latest Oracle Linux 8 for the shape."
-    default: ""
-    required: false
-
-  management_secondary_vnic_enabled:
-    type: boolean
-    title: "Attach secondary VNIC to management"
-    default: false
-    required: false
-
-  management_secondary_vnic_subnet_id:
-    type: string
-    title: "Secondary VNIC subnet OCID (optional)"
-    description: "Subnet for management secondary VNIC. Empty defaults to the RDMA subnet."
-    default: ""
-    required: false
-    visible:
-      eq:
-        - management_secondary_vnic_enabled
-        - true
-
-  management_secondary_vnic_private_ip:
-    type: string
-    title: "Secondary VNIC private IP (optional)"
-    description: "Static private IP for management secondary VNIC. Leave empty for automatic assignment."
-    default: ""
-    required: false
-    visible:
-      eq:
-        - management_secondary_vnic_enabled
-        - true
-
-  mc_shape:
-    type: string
-    title: "MC host shape"
-    default: "VM.Standard3.Flex"
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_ocpus:
-    type: number
-    title: "MC host OCPUs"
-    default: 3
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_memory_gbs:
-    type: number
-    title: "MC host memory (GB)"
-    default: 32
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_boot_volume_size_gbs:
-    type: number
-    title: "MC host boot volume size (GB)"
-    default: 200
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_assign_public_ip:
-    type: boolean
-    title: "Assign public IP to MC host"
-    default: false
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_subnet_id:
-    type: string
-    title: "MC host subnet OCID (optional)"
-    description: "Leave empty to use management subnet from this stack."
-    default: ""
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_availability_domain:
-    type: string
-    title: "MC host AD (optional)"
-    description: "Leave empty to use the same AD resolved by this stack."
-    default: ""
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_deployment_mode:
-    type: string
-    title: "MC deployment mode"
-    description: "custom_image or cloud_init_setup."
-    default: "custom_image"
-    required: false
-    visible:
-      eq:
-        - enable_mc_instance
-        - true
-
-  mc_custom_image_ocid:
-    type: string
-    title: "MC custom image OCID"
-    description: "Required when mc_deployment_mode = custom_image. Cloud-init is still applied."
-    default: ""
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - custom_image
-
-  mc_base_image_ocid:
-    type: string
-    title: "MC base image OCID (optional)"
-    description: "Used for cloud_init_setup. Empty picks latest Oracle Linux 8 for mc_shape."
-    default: ""
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - cloud_init_setup
-
-  mc_cloud_init_template_path:
-    type: string
-    title: "MC cloud-init template path"
-    description: "Optional path for cloud_init_setup mode."
-    default: ""
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - cloud_init_setup
-
-  mc_setup_script_path:
-    type: string
-    title: "MC setup script path"
-    description: "Path created on host for post-copy OVA setup helper script."
-    default: "/opt/kove/setup-kove-mc.sh"
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - cloud_init_setup
-
-  mc_guest_vm_name:
-    type: string
-    title: "MC guest VM name"
-    default: "kove-mc"
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - cloud_init_setup
-
-  mc_guest_disk_path:
-    type: string
-    title: "MC guest qcow2 path"
-    default: "/var/lib/libvirt/images/kove-mc.qcow2"
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - cloud_init_setup
-
-  mc_guest_vcpus:
-    type: number
-    title: "MC guest vCPUs"
-    default: 2
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - cloud_init_setup
-
-  mc_guest_memory_mb:
-    type: number
-    title: "MC guest memory (MB)"
-    default: 8192
-    required: false
-    visible:
-      and:
-        - eq:
-            - enable_mc_instance
-            - true
-        - eq:
-            - mc_deployment_mode
-            - cloud_init_setup
-
-  bastion_image_ocid:
-    type: string
-    title: "Bastion image OCID"
-    description: "Optional custom image for the bastion. Empty selects latest Oracle Linux 8 for the shape."
-    default: ""
-    required: false
-
-  management_cloud_init_template_path:
-    type: string
-    title: "Management cloud-init template path"
-    description: "Leave empty to use the built-in template. Set only if you upload a custom template into the stack zip and reference it relative to the stack root."
-    default: ""
-    required: false
-
-  rhsm_org_id:
-    type: string
-    title: "RHSM organization ID"
-    description: "Red Hat Subscription Manager organization ID for management/BM cloud-init (sensitive; stored in Terraform state)."
-    default: ""
-    required: false
-
-  rhsm_activation_key:
-    type: string
-    title: "RHSM activation key"
-    description: "Red Hat activation key (sensitive; stored in state). Paste in the console; treat like a password."
-    default: ""
-    required: false
-
-  playbooks_zip_url:
-    type: string
-    title: "Playbooks zip URL"
-    description: "Optional HTTPS URL for playbooks.zip downloaded during management VM bootstrap."
-    default: ""
-    required: false
-
   use_compute_agent:
     type: boolean
     title: "Enable OCI compute agent RDMA plugins"
@@ -644,19 +482,143 @@ variables:
   bm_imds_ssh_key_bootstrap:
     type: boolean
     title: "BM IMDS SSH key bootstrap"
-    description: "First-boot script copies SSH keys from instance metadata to opc (useful for custom images)."
     default: true
     required: false
 
   bm_capacity_reservation_id:
     type: string
-    title: "BM capacity reservation OCID (optional)"
+    title: "BM capacity reservation OCID"
     default: ""
     required: false
 
   cluster_network_create_timeout:
     type: string
-    title: "BM cluster network create timeout"
-    description: "Terraform create timeout for BM instances (e.g. 2h). Empty uses provider default."
+    title: "BM create timeout"
     default: ""
+    required: false
+
+  create_bm_console_connections:
+    type: boolean
+    title: "Enable BM console/VNC connections"
+    default: false
+    required: false
+
+  rhsm_org_id:
+    type: string
+    title: "RHSM organization ID"
+    default: ""
+    required: false
+
+  rhsm_activation_key:
+    type: string
+    title: "RHSM activation key"
+    default: ""
+    required: false
+
+  playbooks_zip_url:
+    type: string
+    title: "Playbooks zip URL"
+    default: ""
+    required: false
+
+  offline_repo_tarball_url:
+    type: string
+    title: "RDMA offline RPM tarball URL"
+    default: ""
+    required: false
+
+  offline_repo_tarball_sha256:
+    type: string
+    title: "RDMA offline RPM tarball SHA256"
+    default: ""
+    required: false
+
+  mc_offline_repo_tarball_url:
+    type: string
+    title: "MC offline RPM tarball URL"
+    default: ""
+    required: false
+
+  mc_offline_repo_tarball_sha256:
+    type: string
+    title: "MC offline RPM tarball SHA256"
+    default: ""
+    required: false
+
+  cluster_placement_group_enabled:
+    type: boolean
+    title: "Create cluster placement group"
+    default: false
+    required: false
+
+  cluster_placement_group_type:
+    type: string
+    title: "Cluster placement group type"
+    default: "STANDARD"
+    required: false
+
+  cluster_placement_group_name:
+    type: string
+    title: "Cluster placement group name"
+    default: ""
+    required: false
+
+  cluster_placement_group_description:
+    type: string
+    title: "Cluster placement group description"
+    default: ""
+    required: false
+
+  cluster_network_enable_autoscaling:
+    type: boolean
+    title: "Enable cluster-network autoscaling"
+    default: false
+    required: false
+
+  cluster_network_autoscaling_min_nodes:
+    type: number
+    title: "Autoscaling min nodes"
+    default: 1
+    required: false
+
+  cluster_network_autoscaling_max_nodes:
+    type: number
+    title: "Autoscaling max nodes"
+    default: 8
+    required: false
+
+  cluster_network_autoscaling_initial_nodes:
+    type: number
+    title: "Autoscaling initial nodes"
+    default: 2
+    required: false
+
+  cluster_network_autoscaling_cooldown_seconds:
+    type: number
+    title: "Autoscaling cooldown seconds"
+    default: 300
+    required: false
+
+  cluster_network_autoscaling_scale_out_threshold_percent:
+    type: number
+    title: "Autoscaling scale-out threshold"
+    default: 75
+    required: false
+
+  cluster_network_autoscaling_scale_in_threshold_percent:
+    type: number
+    title: "Autoscaling scale-in threshold"
+    default: 30
+    required: false
+
+  cluster_network_autoscaling_scale_out_by:
+    type: number
+    title: "Autoscaling scale out by"
+    default: 1
+    required: false
+
+  cluster_network_autoscaling_scale_in_by:
+    type: number
+    title: "Autoscaling scale in by"
+    default: 1
     required: false

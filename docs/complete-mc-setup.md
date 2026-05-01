@@ -1,6 +1,6 @@
 # Complete MC setup
 
-Use this guide to deploy and finish setup for the dedicated MC KVM host created by the `mc-instance` module.
+Use this guide to deploy and finish setup for the MC KVM host created by the `mc-instance` module. This MC instance is the deployment management VM.
 
 For environments without public package repository access, use [complete-mc-setup-offline.md](./complete-mc-setup-offline.md) instead.
 
@@ -45,9 +45,11 @@ mc_custom_image_ocid = "ocid1.image.oc1..REPLACE_ME"
 For a base RHEL/Oracle Linux image prepared by cloud-init:
 
 ```hcl
-mc_deployment_mode = "cloud_init_setup"
-mc_base_image_ocid = "ocid1.image.oc1..REPLACE_ME"
+mc_deployment_mode  = "cloud_init_setup"
+rhel8_10_image_ocid = "ocid1.image.oc1..REPLACE_ME"
 ```
+
+If `mc_custom_image_ocid` is empty, the MC instance uses `rhel8_10_image_ocid`.
 
 Optional MC host sizing:
 

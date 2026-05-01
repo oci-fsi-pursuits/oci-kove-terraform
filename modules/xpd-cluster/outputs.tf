@@ -4,12 +4,12 @@ output "vcn_id" {
 }
 
 output "public_subnet_ocid" {
-  description = "Public subnet (bastion)."
+  description = "Public subnet OCID provided by caller."
   value       = local.public_subnet_id
 }
 
 output "private_subnet_ocid" {
-  description = "Private subnet for management and BM resources."
+  description = "Private subnet for MC, compute-system, and RDMA memory resources."
   value       = local.private_subnet_id
 }
 
@@ -23,23 +23,8 @@ output "private_route_table_ocid" {
   value       = var.private_route_table_id
 }
 
-output "bastion_public_ip" {
-  description = "Public IP when enable_bastion is true; null otherwise."
-  value       = var.enable_bastion ? oci_core_instance.bastion[0].public_ip : null
-}
-
-output "management_private_ip" {
-  description = "Private IP of the management VM."
-  value       = var.enable_management_instance ? oci_core_instance.management[0].private_ip : null
-}
-
-output "management_secondary_vnic_id" {
-  description = "Secondary VNIC attachment OCID for management node when enabled; null otherwise."
-  value       = var.enable_management_instance && var.management_secondary_vnic_enabled ? oci_core_vnic_attachment.management_secondary[0].id : null
-}
-
 output "compute_cluster_id" {
-  description = "BM compute cluster OCID when rdma_deployment_mode is compute_cluster; null otherwise."
+  description = "BM compute cluster OCID when rdma_deployment_mode is compute_cluster; used by the compute-system module."
   value       = local.use_compute_cluster_mode ? oci_core_compute_cluster.bm_compute[0].id : null
 }
 
@@ -54,23 +39,18 @@ output "cluster_placement_group_id" {
 }
 
 output "bm_instance_ids" {
-  description = "BM OCIDs in order: index 0 = control, remaining = memory nodes."
-  value       = local.use_compute_cluster_mode ? oci_core_instance.bm_nodes[*].id : local.cluster_network_instance_ids
+  description = "RDMA memory-node BM OCIDs."
+  value       = local.use_compute_cluster_mode ? oci_core_instance.bm_nodes[*].id : local.cluster_network_memory_instance_ids
 }
 
 output "bm_private_ips" {
-  description = "Private IPs aligned with bm_instance_ids."
-  value       = local.use_compute_cluster_mode ? oci_core_instance.bm_nodes[*].private_ip : local.cluster_network_instance_private_ips
-}
-
-output "bm_control_private_ip" {
-  description = "Private IP of the single BM control node (index 0)."
-  value       = local.use_compute_cluster_mode && length(oci_core_instance.bm_nodes) > 0 ? oci_core_instance.bm_nodes[0].private_ip : (length(local.cluster_network_instance_private_ips) > 0 ? local.cluster_network_instance_private_ips[0] : null)
+  description = "RDMA memory-node private IPs aligned with bm_instance_ids."
+  value       = local.use_compute_cluster_mode ? oci_core_instance.bm_nodes[*].private_ip : local.cluster_network_memory_private_ips
 }
 
 output "bm_memory_private_ips" {
-  description = "Private IPs of memory nodes only (excludes control)."
-  value       = local.use_compute_cluster_mode ? slice(oci_core_instance.bm_nodes[*].private_ip, 1, length(oci_core_instance.bm_nodes)) : (length(local.cluster_network_instance_private_ips) > 1 ? slice(local.cluster_network_instance_private_ips, 1, length(local.cluster_network_instance_private_ips)) : [])
+  description = "RDMA memory-node private IPs."
+  value       = local.use_compute_cluster_mode ? oci_core_instance.bm_nodes[*].private_ip : local.cluster_network_memory_private_ips
 }
 
 output "cluster_network_instance_ids" {
@@ -124,6 +104,11 @@ output "existing_vcns_in_compartment" {
 }
 
 output "availability_domain_used" {
-  description = "AD used for bastion, management VM, compute cluster, and BMs."
+  description = "AD used for RDMA memory infrastructure."
   value       = local.cluster_ad
+}
+
+output "cluster_ssh_authorized_keys" {
+  description = "Newline-separated SSH public keys injected into RDMA and compute-system BM metadata."
+  value       = local.cluster_ssh_authorized_keys
 }
