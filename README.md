@@ -105,6 +105,25 @@ terraform plan
 terraform apply
 ```
 
+5. Post-deployment setup begins by copying your private key and Kove software bundles to the bastion (or directly to each target node):
+
+- `kove-xpd-software-2503-rhel8.10` -> RDMA memory nodes (`xpd1` + additional nodes)
+- `kove-mc-2503-mcvirt` -> `mc-instance`
+- `kove-compute-software-2503-rhel8.10` -> `compute-system` (and additional RDMA stack components where required)
+
+6. Follow the MC setup guide for post-deployment install/configuration of KVM and guest image:
+
+- [Complete MC setup](docs/complete-mc-setup.md) - environments with internet connectivity
+- [Complete MC setup with offline RPMs](docs/complete-mc-setup-offline.md) - air-gapped environments
+
+7. After the MC host is configured with the guest image, follow the Kove setup guide for:
+
+- web console access for licensing
+- VNC access to the MC CLI for connecting XPD and compute-system
+- installing XPD and compute packages for MC agents
+
+Helpful issue notes are also included near the bottom of this README.
+
 ## Documentation
 
 | Document | Use When |
@@ -189,6 +208,7 @@ Host oci-kvm
 ```
 
 After connecting to `oci-bastion`, open the MC web UI from the workstation at `https://localhost:1443`.
+
 
 
 
