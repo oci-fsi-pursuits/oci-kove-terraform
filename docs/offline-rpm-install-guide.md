@@ -20,10 +20,13 @@ MC KVM host bootstrap:
 ```text
 python3
 qemu-kvm
+libvirt-daemon-kvm
 libvirt
+libvirt-client
 virt-install
 qemu-img
-libguestfs-tools-c
+nftables
+tar
 ```
 
 ## Object Storage links

@@ -89,10 +89,12 @@ RDMA memory nodes are named `kove-prod-xpd-1`, `kove-prod-xpd-2`, and so on. Com
 Resources use OCI defined tags, not freeform tags. Set `defined_tag_namespace` to the existing OCI tag namespace that contains the standard tag keys:
 
 ```hcl
+enable_defined_tags   = true
 defined_tag_namespace = "kove"
 ```
 
 The tag namespace and keys must exist in OCI before apply.
+Set `enable_defined_tags = false` to deploy before those tags exist, then switch it back to `true` after creating the namespace and keys.
 
 ## RDMA Deployment Mode
 
@@ -119,7 +121,30 @@ If omitted, defaults apply and placement groups are not created.
 
 ## Start Here
 
-1. Download the required Kove documentation and software files from [download.kove.com/login](https://download.kove.com/login). Treat these as prerequisites for the deployment and MC completion workflow:
+1. Create the OCI defined-tag namespace and keys before running `terraform apply`.
+
+Terraform applies standard defined tags to OCI resources. In OCI Console, go to **Governance & Administration** -> **Tag Namespaces**, create or reuse the `kove` namespace, then create these tag keys:
+
+- `project`
+- `environment`
+- `managed_by`
+- `workload`
+- `node_role`
+- `node_pool`
+- `node_index`
+- `cluster_name`
+
+Your `.tfvars` should point Terraform at that namespace:
+
+```hcl
+enable_defined_tags   = true
+defined_tag_namespace = "kove"
+```
+
+If the namespace or keys do not exist, OCI will reject the deployment with an `Invalid tags` error.
+For a temporary deployment before tags are ready, set `enable_defined_tags = false`.
+
+2. Download the required Kove documentation and software files from [download.kove.com/login](https://download.kove.com/login). Treat these as prerequisites for the deployment and MC completion workflow:
 
 - `Kove_Direct_System_Architecture-C_API-2503`
 - `Kove_SDM-Getting_Started-2503`
@@ -131,15 +156,15 @@ If omitted, defaults apply and placement groups are not created.
 - `kove-mc-2503-mcvirt`
 - `kove-compute-software-2503-rhel8.10`
 
-2. Copy the example variables file:
+3. Copy the example variables file:
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-3. Edit `terraform.tfvars` for your tenancy, compartment, subnets, RHEL 8.10 image, and deployment mode.
+4. Edit `terraform.tfvars` for your tenancy, compartment, subnets, RHEL 8.10 image, and deployment mode.
 
-4. Initialize and deploy:
+5. Initialize and deploy:
 
 ```bash
 terraform init
@@ -147,18 +172,18 @@ terraform plan
 terraform apply
 ```
 
-5. Post-deployment setup begins by copying your private key and Kove software bundles to the bastion (or directly to each target node):
+6. Post-deployment setup begins by copying your private key and Kove software bundles to the bastion (or directly to each target node):
 
 - `kove-xpd-software-2503-rhel8.10` -> RDMA memory nodes (`xpd1` + additional nodes)
 - `kove-mc-2503-mcvirt` -> `mc-instance`
 - `kove-compute-software-2503-rhel8.10` -> `compute-system` (and additional RDMA stack components where required)
 
-6. Follow the MC setup guide for post-deployment install/configuration of KVM and guest image:
+7. Follow the MC setup guide for post-deployment install/configuration of KVM and guest image:
 
 - [Complete MC setup](docs/complete-mc-setup.md) - environments with internet connectivity
 - [Complete MC setup with offline RPMs](docs/complete-mc-setup-offline.md) - air-gapped environments
 
-7. After the MC host is configured with the guest image, follow the Kove setup guide for:
+8. After the MC host is configured with the guest image, follow the Kove setup guide for:
 
 - web console access for licensing
 - VNC access to the MC CLI for connecting XPD and compute-system

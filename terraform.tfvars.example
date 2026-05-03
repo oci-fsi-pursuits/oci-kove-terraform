@@ -9,16 +9,11 @@ ssh_public_key = <<-EOT
 ssh-rsa REPLACE_ME
 EOT
 
-kove_namespace    = "kove"
-kove_environment  = "prod"
+kove_namespace        = "kove"
+kove_environment      = "prod"
+# Set true after the OCI defined-tag namespace and keys are created.
+enable_defined_tags   = false
 defined_tag_namespace = "kove"
-host_label_prefix = "fra"
-
-# Optional per-role display-name prefixes. Leave empty to use composed labels prefix.
-# bastion_name_prefix        = "fra-bastion"
-# mc_name_prefix             = "fra-mc"
-# compute_system_name_prefix = "fra-csys"
-# xpd_name_prefix            = "fra-xpd"
 
 tags = {
   workload = "rdma-platform"
@@ -96,7 +91,6 @@ mc_shape            = "VM.Standard3.Flex"
 mc_ocpus            = 3
 mc_memory_gbs       = 32
 mc_assign_public_ip = false
-mc_subnet_id        = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
 # MC KVM host automation toggle (default false):
 # - false: use docs/mc-setup-manual-end-to-end.md

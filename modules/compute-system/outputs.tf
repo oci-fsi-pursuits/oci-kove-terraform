@@ -8,11 +8,11 @@ output "instance_id" {
 output "private_ip" {
   description = "Compute-system private IP in single-BM mode, or first cluster-network instance private IP when cluster mode is enabled."
   value = local.use_cluster_network_mode ? (
-    length(values(data.oci_core_instance.cluster_network_instances)) > 0 ? values(data.oci_core_instance.cluster_network_instances)[0].private_ip : null
+    try(data.oci_core_instance.cluster_network_first_instance[0].private_ip, null)
   ) : try(oci_core_instance.compute_system[0].private_ip, null)
 }
 
 output "cluster_network_id" {
   description = "Compute-system cluster network OCID when cluster-network mode is enabled; null otherwise."
-  value       = local.use_cluster_network_mode ? oci_core_cluster_network.compute_system[0].id : null
+  value       = try(oci_core_cluster_network.compute_system[0].id, null)
 }

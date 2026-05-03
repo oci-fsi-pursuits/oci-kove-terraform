@@ -24,6 +24,7 @@ variableGroups:
     variables:
       - kove_namespace
       - kove_environment
+      - enable_defined_tags
       - defined_tag_namespace
       - host_label_prefix
       - availability_domain
@@ -179,6 +180,13 @@ variables:
     type: string
     title: "Environment"
     default: "dev"
+    required: false
+
+  enable_defined_tags:
+    type: boolean
+    title: "Enable defined tags"
+    description: "Apply OCI defined tags to resources. Disable until the OCI tag namespace and keys exist."
+    default: true
     required: false
 
   defined_tag_namespace:

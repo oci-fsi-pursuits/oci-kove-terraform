@@ -60,6 +60,12 @@ variable "defined_tag_namespace" {
   default     = "kove"
 }
 
+variable "enable_defined_tags" {
+  type        = bool
+  description = "Apply OCI defined tags to MC resources."
+  default     = true
+}
+
 variable "instance_name_suffix" {
   type        = string
   description = "Suffix used for display_name."
@@ -183,7 +189,7 @@ variable "offline_repo_tarball_sha256" {
 variable "offline_rpm_packages" {
   type        = string
   description = "Space-separated package names installed from the offline RPM repository when offline_repo_tarball_url is set."
-  default     = "qemu-kvm libvirt-daemon-kvm libvirt virt-install qemu-img python3 nftables"
+  default     = "python3 qemu-kvm libvirt-daemon-kvm libvirt libvirt-client virt-install qemu-img nftables tar"
 }
 
 variable "setup_script_path" {

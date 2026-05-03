@@ -54,3 +54,9 @@ variable "defined_tag_namespace" {
   description = "OCI defined tag namespace used for standard tags. The namespace and tag keys must already exist in OCI."
   default     = "kove"
 }
+
+variable "enable_defined_tags" {
+  type        = bool
+  description = "Emit defined tags. Set false when the OCI tag namespace or keys have not been created yet."
+  default     = true
+}

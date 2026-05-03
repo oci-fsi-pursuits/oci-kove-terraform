@@ -75,6 +75,12 @@ variable "defined_tag_namespace" {
   default     = "kove"
 }
 
+variable "enable_defined_tags" {
+  type        = bool
+  description = "Apply OCI defined tags to RDMA resources."
+  default     = true
+}
+
 # ---------------------------------------------------------------------------
 # Caller-provided networking
 # ---------------------------------------------------------------------------

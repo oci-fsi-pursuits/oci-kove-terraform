@@ -25,6 +25,7 @@ module "rdma_platform" {
   kove_environment      = var.kove_environment
   name_prefix_override  = var.xpd_name_prefix
   defined_tag_namespace = var.defined_tag_namespace
+  enable_defined_tags   = var.enable_defined_tags
   host_label_prefix     = var.host_label_prefix
   availability_domain   = var.availability_domain
 
@@ -92,6 +93,7 @@ module "bastion" {
   kove_environment      = var.kove_environment
   name_prefix_override  = var.bastion_name_prefix
   defined_tag_namespace = var.defined_tag_namespace
+  enable_defined_tags   = var.enable_defined_tags
   host_label_prefix     = var.host_label_prefix
   tags                  = var.tags
 
@@ -115,6 +117,7 @@ module "compute_system" {
   kove_environment      = var.kove_environment
   name_prefix_override  = var.compute_system_name_prefix
   defined_tag_namespace = var.defined_tag_namespace
+  enable_defined_tags   = var.enable_defined_tags
   host_label_prefix     = var.host_label_prefix
   tags                  = var.tags
 
@@ -167,6 +170,7 @@ module "mc_instance" {
   kove_environment      = var.kove_environment
   name_prefix_override  = var.mc_name_prefix
   defined_tag_namespace = var.defined_tag_namespace
+  enable_defined_tags   = var.enable_defined_tags
   tags                  = var.tags
 
   instance_name_suffix      = var.mc_instance_name_suffix

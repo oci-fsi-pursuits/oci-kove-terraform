@@ -30,11 +30,11 @@ resource "oci_core_instance" "bm_nodes" {
   compartment_id      = var.compartment_ocid
   display_name        = "${local.name_prefix}-${local.xpd_name}-${count.index + 1}"
   shape               = var.bm_node_shape
-  defined_tags = merge(local.common_tags, {
+  defined_tags = var.enable_defined_tags ? merge(local.common_tags, {
     "${var.defined_tag_namespace}.node_role"  = local.xpd_name
     "${var.defined_tag_namespace}.node_index" = tostring(count.index + 1)
     "${var.defined_tag_namespace}.node_pool"  = local.xpd_name
-  })
+  }) : {}
 
   cluster_placement_group_id = var.cluster_placement_group_enabled ? oci_cluster_placement_groups_cluster_placement_group.bm_rdma[0].id : null
 
@@ -116,10 +116,10 @@ resource "oci_core_instance_configuration" "rdma_cluster_network" {
       compartment_id      = var.compartment_ocid
       display_name        = "${local.name_prefix}-${local.xpd_name}"
       shape               = var.bm_node_shape
-      defined_tags = merge(local.common_tags, {
+      defined_tags = var.enable_defined_tags ? merge(local.common_tags, {
         "${var.defined_tag_namespace}.node_pool" = local.xpd_name
         "${var.defined_tag_namespace}.node_role" = local.xpd_name
-      })
+      }) : {}
 
       metadata = merge(
         { ssh_authorized_keys = local.cluster_ssh_authorized_keys },
@@ -192,16 +192,15 @@ resource "oci_core_cluster_network" "rdma" {
 
   compartment_id = var.compartment_ocid
   display_name   = "${local.name_prefix}-${local.xpd_name}-cluster-network"
-  defined_tags = merge(local.common_tags, {
+  defined_tags = var.enable_defined_tags ? merge(local.common_tags, {
     "${var.defined_tag_namespace}.cluster_name" = "${local.name_prefix}-${local.xpd_name}-cluster-network"
     "${var.defined_tag_namespace}.node_pool"    = local.xpd_name
-  })
+  }) : {}
 
   instance_pools {
     instance_configuration_id       = oci_core_instance_configuration.rdma_cluster_network[0].id
     size                            = var.memory_node_count
     display_name                    = "${local.name_prefix}-${local.xpd_name}"
-    instance_display_name_formatter = "${local.name_prefix}-${local.xpd_name}-%d"
   }
 
   placement_configuration {

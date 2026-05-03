@@ -23,7 +23,7 @@ Do not run manual `dnf` or `yum` package installs on the MC host during normal s
 SSH to the MC host and verify the expected packages and services:
 
 ```bash
-rpm -q qemu-kvm libvirt virt-install qemu-img python3
+rpm -q python3 qemu-kvm libvirt-daemon-kvm libvirt libvirt-client virt-install qemu-img nftables tar
 
 if systemctl list-unit-files | grep -q '^libvirtd.service'; then
   sudo systemctl is-active libvirtd
@@ -69,7 +69,7 @@ sudo /opt/kove/setup-kove-mc.sh \
   8192
 ```
 
-Confirm the guest is running:
+The helper waits for the guest DHCP lease, applies secondary-VNIC forwarding, and prints the client-side curl command with the MC secondary VNIC IP filled in. Confirm the guest is running:
 
 ```bash
 sudo virsh --connect qemu:///system list --all
@@ -80,14 +80,14 @@ Use `sudo virsh` for system libvirt commands. Running `virsh --connect qemu:///s
 
 ## Validate forwarded access
 
-After the guest has an IP address, re-run the forwarding helper or restart the systemd unit:
+If you need to reapply forwarding later, run:
 
 ```bash
-sudo systemctl restart kove-mc-port-forwarding.service
-sudo nft list chain ip nat PREROUTING
+sudo /usr/local/sbin/oci-mc-port-forwarding.sh
+sudo nft list ruleset | grep -E '2222|8443|kove|dnat|masquerade' -n
 ```
 
-From a client or bastion that can reach the MC host secondary IP:
+From an XPD node or another client that can reach the MC secondary VNIC IP:
 
 ```bash
 curl -k --connect-timeout 15 \

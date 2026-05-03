@@ -5,6 +5,7 @@ module "labels" {
   environment           = var.kove_environment
   name_prefix_override  = var.name_prefix_override
   defined_tag_namespace = var.defined_tag_namespace
+  enable_defined_tags   = var.enable_defined_tags
 
   additional_tags = merge(var.tags, {
     workload = "bastion"

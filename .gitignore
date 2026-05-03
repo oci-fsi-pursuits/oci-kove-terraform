@@ -47,6 +47,7 @@ tfplan-*.bin
 tfplan-*.json
 
 # Local/generated tooling and offline RPM repos
+scripts/
 tools/
 
 # Kove software bundles and VM images

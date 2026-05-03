@@ -65,6 +65,12 @@ variable "defined_tag_namespace" {
   default     = "kove"
 }
 
+variable "enable_defined_tags" {
+  type        = bool
+  description = "Apply OCI defined tags to bastion resources."
+  default     = true
+}
+
 variable "shape" {
   type        = string
   description = "Bastion VM shape."

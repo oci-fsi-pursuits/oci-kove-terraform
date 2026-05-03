@@ -60,6 +60,12 @@ variable "defined_tag_namespace" {
   default     = "kove"
 }
 
+variable "enable_defined_tags" {
+  type        = bool
+  description = "Apply OCI defined tags to compute-system resources."
+  default     = true
+}
+
 variable "rdma_deployment_mode" {
   type        = string
   description = "RDMA deployment mode: compute_cluster or cluster_network."

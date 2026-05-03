@@ -5,6 +5,7 @@ module "labels" {
   environment           = var.kove_environment
   name_prefix_override  = var.name_prefix_override
   defined_tag_namespace = var.defined_tag_namespace
+  enable_defined_tags   = var.enable_defined_tags
 
   additional_tags = merge(var.tags, {
     workload = "compute-system"
@@ -75,11 +76,11 @@ resource "oci_core_instance" "compute_system" {
   compartment_id      = var.compartment_ocid
   display_name        = "${module.labels.name_prefix}-${local.compute_role_name}-1"
   shape               = var.shape
-  defined_tags = merge(module.labels.defined_tags, {
+  defined_tags = var.enable_defined_tags ? merge(module.labels.defined_tags, {
     "${var.defined_tag_namespace}.node_role"  = local.compute_role_name
     "${var.defined_tag_namespace}.node_index" = "1"
     "${var.defined_tag_namespace}.node_pool"  = local.compute_role_name
-  })
+  }) : {}
 
   capacity_reservation_id = trimspace(var.capacity_reservation_id) != "" ? var.capacity_reservation_id : null
   compute_cluster_id      = local.use_compute_cluster_mode ? var.compute_cluster_id : null
@@ -158,10 +159,10 @@ resource "oci_core_instance_configuration" "compute_system_cluster_network" {
       compartment_id      = var.compartment_ocid
       display_name        = "${module.labels.name_prefix}-${local.compute_role_name}"
       shape               = var.shape
-      defined_tags = merge(module.labels.defined_tags, {
+      defined_tags = var.enable_defined_tags ? merge(module.labels.defined_tags, {
         "${var.defined_tag_namespace}.node_pool" = local.compute_role_name
         "${var.defined_tag_namespace}.node_role" = local.compute_role_name
-      })
+      }) : {}
 
       metadata = {
         ssh_authorized_keys = var.ssh_public_keys
@@ -227,16 +228,15 @@ resource "oci_core_cluster_network" "compute_system" {
 
   compartment_id = var.compartment_ocid
   display_name   = "${module.labels.name_prefix}-${local.compute_role_name}-cluster-network"
-  defined_tags = merge(module.labels.defined_tags, {
+  defined_tags = var.enable_defined_tags ? merge(module.labels.defined_tags, {
     "${var.defined_tag_namespace}.cluster_name" = "${module.labels.name_prefix}-${local.compute_role_name}-cluster-network"
     "${var.defined_tag_namespace}.node_pool"    = local.compute_role_name
-  })
+  }) : {}
 
   instance_pools {
     instance_configuration_id       = oci_core_instance_configuration.compute_system_cluster_network[0].id
     size                            = var.cluster_network_node_count
     display_name                    = "${module.labels.name_prefix}-${local.compute_role_name}"
-    instance_display_name_formatter = "${module.labels.name_prefix}-${local.compute_role_name}-%d"
   }
 
   placement_configuration {
@@ -317,11 +317,8 @@ data "oci_core_cluster_network_instances" "compute_system" {
   cluster_network_id = oci_core_cluster_network.compute_system[0].id
 }
 
-data "oci_core_instance" "cluster_network_instances" {
-  for_each = local.use_cluster_network_mode ? {
-    for instance in data.oci_core_cluster_network_instances.compute_system[0].instances :
-    instance["id"] => instance
-  } : {}
+data "oci_core_instance" "cluster_network_first_instance" {
+  count = local.use_cluster_network_mode ? 1 : 0
 
-  instance_id = each.key
+  instance_id = data.oci_core_cluster_network_instances.compute_system[0].instances[0]["id"]
 }

@@ -13,8 +13,8 @@ locals {
   # Otherwise compose from namespace/environment and remove duplicates.
   name_prefix = trimspace(var.name_prefix_override) != "" ? trimspace(var.name_prefix_override) : join("-", distinct(compact([var.namespace, var.environment])))
 
-  defined_tags = {
+  defined_tags = var.enable_defined_tags ? {
     for key, value in local.base_tags :
     "${var.defined_tag_namespace}.${key}" => value
-  }
+  } : {}
 }

@@ -93,6 +93,12 @@ variable "defined_tag_namespace" {
   default     = "kove"
 }
 
+variable "enable_defined_tags" {
+  type        = bool
+  description = "Apply OCI defined tags to resources. Set false when the OCI tag namespace or keys have not been created yet."
+  default     = true
+}
+
 # ---------------------------------------------------------------------------
 # Images
 # ---------------------------------------------------------------------------
@@ -293,7 +299,7 @@ variable "mc_offline_repo_tarball_sha256" {
 variable "mc_offline_rpm_packages" {
   type        = string
   description = "Space-separated package names installed from the MC offline RPM repository when mc_offline_repo_tarball_url is set."
-  default     = "qemu-kvm libvirt-daemon-kvm libvirt virt-install qemu-img python3 nftables"
+  default     = "python3 qemu-kvm libvirt-daemon-kvm libvirt libvirt-client virt-install qemu-img nftables tar"
 }
 
 variable "mc_instance_name_suffix" {
