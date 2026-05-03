@@ -24,7 +24,7 @@ variableGroups:
     variables:
       - kove_namespace
       - kove_environment
-      - kove_stack_name
+      - defined_tag_namespace
       - host_label_prefix
       - availability_domain
       - rdma_deployment_mode
@@ -55,14 +55,10 @@ variableGroups:
       - mc_assign_public_ip
       - mc_subnet_id
       - mc_availability_domain
-      - mc_secondary_vnic_enabled
-      - mc_secondary_vnic_subnet_id
-      - mc_secondary_vnic_private_ip
       - mc_deployment_mode
       - mc_cloud_init_template_path
       - mc_setup_script_path
       - mc_guest_vm_name
-      - mc_guest_disk_path
       - mc_guest_vcpus
       - mc_guest_memory_mb
 
@@ -185,10 +181,11 @@ variables:
     default: "dev"
     required: false
 
-  kove_stack_name:
+  defined_tag_namespace:
     type: string
-    title: "Stack name"
-    default: "rdma"
+    title: "Defined tag namespace"
+    description: "OCI defined tag namespace used for standard tags. The namespace and tag keys must already exist."
+    default: "kove"
     required: false
 
   host_label_prefix:
@@ -356,32 +353,6 @@ variables:
     default: ""
     required: false
 
-  mc_secondary_vnic_enabled:
-    type: boolean
-    title: "Attach MC secondary VNIC"
-    default: false
-    required: false
-
-  mc_secondary_vnic_subnet_id:
-    type: string
-    title: "MC secondary VNIC subnet OCID"
-    default: ""
-    required: false
-    visible:
-      eq:
-        - mc_secondary_vnic_enabled
-        - true
-
-  mc_secondary_vnic_private_ip:
-    type: string
-    title: "MC secondary VNIC private IP"
-    default: ""
-    required: false
-    visible:
-      eq:
-        - mc_secondary_vnic_enabled
-        - true
-
   mc_deployment_mode:
     type: string
     title: "MC deployment mode"
@@ -405,12 +376,6 @@ variables:
     type: string
     title: "MC guest VM name"
     default: "kove-mc"
-    required: false
-
-  mc_guest_disk_path:
-    type: string
-    title: "MC guest qcow2 path"
-    default: "/var/lib/libvirt/images/kove-mc.qcow2"
     required: false
 
   mc_guest_vcpus:

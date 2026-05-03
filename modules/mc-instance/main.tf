@@ -1,10 +1,10 @@
 module "labels" {
   source = "../labels"
 
-  namespace   = var.kove_namespace
-  environment = var.kove_environment
-  stack_name  = local.labels_stack_name
-  name_prefix_override = var.name_prefix_override
+  namespace             = var.kove_namespace
+  environment           = var.kove_environment
+  name_prefix_override  = var.name_prefix_override
+  defined_tag_namespace = var.defined_tag_namespace
 
   additional_tags = merge(var.tags, {
     workload = "mc-host"
@@ -38,7 +38,7 @@ resource "oci_core_instance" "mc_host" {
   availability_domain = local.ad_used
   display_name        = local.instance_display_name
   shape               = var.shape
-  freeform_tags       = module.labels.tags
+  defined_tags        = module.labels.defined_tags
 
   shape_config {
     ocpus         = var.ocpus
@@ -55,9 +55,8 @@ resource "oci_core_instance" "mc_host" {
   metadata = merge(
     {
       ssh_authorized_keys = trimspace(replace(var.ssh_public_key, "\r", ""))
-      user_data           = local.user_data_b64
     },
-    {}
+    var.enable_kvm_automation ? { user_data = local.user_data_b64 } : {}
   )
 
   create_vnic_details {

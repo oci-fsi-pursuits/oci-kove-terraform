@@ -11,7 +11,7 @@ EOT
 
 kove_namespace    = "kove"
 kove_environment  = "prod"
-kove_stack_name   = "rdma"
+defined_tag_namespace = "kove"
 host_label_prefix = "fra"
 
 # Optional per-role display-name prefixes. Leave empty to use composed labels prefix.
@@ -21,8 +21,7 @@ host_label_prefix = "fra"
 # xpd_name_prefix            = "fra-xpd"
 
 tags = {
-  project = "rdma-platform"
-  env     = "prod"
+  workload = "rdma-platform"
 }
 
 # Example: pILZ:EU-FRANKFURT-1-AD-2
@@ -47,6 +46,20 @@ xpd_name             = "xpd"
 # Optional compute-system BM. Disable this without affecting memory nodes.
 enable_compute_system = true
 compute_system_name   = "compute-system"
+
+# Optional: switch compute-system from single-BM mode to dedicated
+# cluster-network + instance-pool mode.
+# compute_system_use_cluster_network_autoscaling = true
+# compute_system_cluster_network_node_count = 1
+# compute_system_cluster_network_enable_autoscaling = false
+# compute_system_cluster_network_autoscaling_min_nodes = 1
+# compute_system_cluster_network_autoscaling_max_nodes = 4
+# compute_system_cluster_network_autoscaling_initial_nodes = 1
+# compute_system_cluster_network_autoscaling_cooldown_seconds = 300
+# compute_system_cluster_network_autoscaling_scale_out_threshold_percent = 75  # CPU%
+# compute_system_cluster_network_autoscaling_scale_in_threshold_percent = 30   # CPU%
+# compute_system_cluster_network_autoscaling_scale_out_by = 1
+# compute_system_cluster_network_autoscaling_scale_in_by = 1
 
 # Optional RDMA cluster placement group (xpd-cluster).
 # WARNING: can reduce placement flexibility and increase capacity-related launch failures in constrained AD/FD conditions.
@@ -85,10 +98,10 @@ mc_memory_gbs       = 32
 mc_assign_public_ip = false
 mc_subnet_id        = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# Optional secondary VNIC controls for the MC instance.
-# mc_secondary_vnic_subnet_id  = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
-# mc_secondary_vnic_private_ip = "10.0.2.58"
-mc_secondary_vnic_interface = "eth1"
+# MC KVM host automation toggle (default false):
+# - false: use docs/mc-setup-manual-end-to-end.md
+# - true : cloud-init configures KVM/libvirt helpers automatically
+mc_enable_kvm_automation = false
 
 # MC deployment mode.
 mc_deployment_mode = "custom_image"

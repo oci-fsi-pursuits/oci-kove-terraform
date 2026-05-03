@@ -34,6 +34,6 @@ output "setup_script_path" {
 }
 
 output "setup_script_run_command" {
-  description = "Command to run on MC host after you manually copy/convert the OVA into qcow2."
-  value       = local.deployment_mode == "cloud_init_setup" ? format("sudo %s %s %s %d %d", var.setup_script_path, var.guest_vm_name, var.guest_disk_path, var.guest_vcpus, var.guest_memory_mb) : null
+  description = "Command to run on MC host after copying the MC OVA into the host user's home directory."
+  value       = local.deployment_mode == "cloud_init_setup" ? format("sudo %s", var.setup_script_path) : null
 }

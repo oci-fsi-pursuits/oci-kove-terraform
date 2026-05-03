@@ -41,7 +41,7 @@ variable "kove_environment" {
 
 variable "kove_stack_name" {
   type        = string
-  description = "Stack identifier used in display names."
+  description = "Compatibility stack identifier. Not included in default display names."
   default     = "rdma"
 }
 
@@ -83,8 +83,14 @@ variable "availability_domain" {
 
 variable "tags" {
   type        = map(string)
-  description = "Freeform tags applied to major resources."
+  description = "Extra defined tag values applied to major resources. Keys are created under defined_tag_namespace."
   default     = {}
+}
+
+variable "defined_tag_namespace" {
+  type        = string
+  description = "OCI defined tag namespace used for standard tags. The namespace and tag keys must already exist in OCI."
+  default     = "kove"
 }
 
 # ---------------------------------------------------------------------------
@@ -224,28 +230,10 @@ variable "mc_assign_public_ip" {
   default     = false
 }
 
-variable "mc_secondary_vnic_enabled" {
+variable "mc_enable_kvm_automation" {
   type        = bool
-  description = "Attach a secondary VNIC to the MC instance."
+  description = "Enable automated KVM/libvirt setup on the MC host via cloud-init. When false, use docs/mc-setup-manual-end-to-end.md."
   default     = false
-}
-
-variable "mc_secondary_vnic_subnet_id" {
-  type        = string
-  description = "Subnet OCID for the MC secondary VNIC. Empty uses the MC primary subnet."
-  default     = ""
-}
-
-variable "mc_secondary_vnic_private_ip" {
-  type        = string
-  description = "Optional fixed private IP for the MC secondary VNIC."
-  default     = ""
-}
-
-variable "mc_secondary_vnic_interface" {
-  type        = string
-  description = "Expected Linux interface name for MC secondary VNIC policy routing."
-  default     = "eth1"
 }
 
 variable "mc_shape" {
@@ -305,7 +293,7 @@ variable "mc_offline_repo_tarball_sha256" {
 variable "mc_offline_rpm_packages" {
   type        = string
   description = "Space-separated package names installed from the MC offline RPM repository when mc_offline_repo_tarball_url is set."
-  default     = "qemu-kvm libvirt virt-install qemu-img libguestfs-tools-c python3"
+  default     = "qemu-kvm libvirt-daemon-kvm libvirt virt-install qemu-img python3 nftables"
 }
 
 variable "mc_instance_name_suffix" {
@@ -334,8 +322,8 @@ variable "mc_guest_vm_name" {
 
 variable "mc_guest_disk_path" {
   type        = string
-  description = "Default qcow2 path used by the MC setup helper script."
-  default     = "/var/lib/libvirt/images/kove-mc.qcow2"
+  description = "Internal converted guest disk path used by the MC setup helper script."
+  default     = "/var/lib/libvirt/images/kove-mc.img"
 }
 
 variable "mc_guest_memory_mb" {
@@ -357,6 +345,72 @@ variable "enable_compute_system" {
   type        = bool
   description = "Create the optional single BM node labeled compute-system."
   default     = true
+}
+
+variable "compute_system_use_cluster_network_autoscaling" {
+  type        = bool
+  description = "When true, deploy compute-system as a dedicated cluster network (instance-pool based) instead of a single BM instance."
+  default     = false
+}
+
+variable "compute_system_cluster_network_node_count" {
+  type        = number
+  description = "Desired node count for compute-system cluster-network mode."
+  default     = 1
+}
+
+variable "compute_system_cluster_network_enable_autoscaling" {
+  type        = bool
+  description = "Enable autoscaling for compute-system cluster-network mode."
+  default     = false
+}
+
+variable "compute_system_cluster_network_autoscaling_min_nodes" {
+  type        = number
+  description = "Minimum nodes for compute-system cluster-network autoscaling."
+  default     = 1
+}
+
+variable "compute_system_cluster_network_autoscaling_max_nodes" {
+  type        = number
+  description = "Maximum nodes for compute-system cluster-network autoscaling."
+  default     = 4
+}
+
+variable "compute_system_cluster_network_autoscaling_initial_nodes" {
+  type        = number
+  description = "Initial nodes for compute-system cluster-network autoscaling."
+  default     = 1
+}
+
+variable "compute_system_cluster_network_autoscaling_cooldown_seconds" {
+  type        = number
+  description = "Cooldown seconds for compute-system cluster-network autoscaling."
+  default     = 300
+}
+
+variable "compute_system_cluster_network_autoscaling_scale_out_threshold_percent" {
+  type        = number
+  description = "CPU utilization percent threshold for compute-system cluster-network scale-out."
+  default     = 75
+}
+
+variable "compute_system_cluster_network_autoscaling_scale_in_threshold_percent" {
+  type        = number
+  description = "CPU utilization percent threshold for compute-system cluster-network scale-in."
+  default     = 30
+}
+
+variable "compute_system_cluster_network_autoscaling_scale_out_by" {
+  type        = number
+  description = "Node increment for compute-system cluster-network scale-out action."
+  default     = 1
+}
+
+variable "compute_system_cluster_network_autoscaling_scale_in_by" {
+  type        = number
+  description = "Node decrement for compute-system cluster-network scale-in action."
+  default     = 1
 }
 
 variable "bm_node_shape" {

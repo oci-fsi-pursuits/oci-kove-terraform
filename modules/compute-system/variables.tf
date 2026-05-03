@@ -32,7 +32,7 @@ variable "kove_environment" {
 
 variable "kove_stack_name" {
   type        = string
-  description = "Stack identifier used in naming."
+  description = "Compatibility stack identifier. Not included in default display names."
   default     = "rdma"
 }
 
@@ -50,8 +50,14 @@ variable "host_label_prefix" {
 
 variable "tags" {
   type        = map(string)
-  description = "Extra freeform tags."
+  description = "Extra defined tag values."
   default     = {}
+}
+
+variable "defined_tag_namespace" {
+  type        = string
+  description = "OCI defined tag namespace used for standard tags."
+  default     = "kove"
 }
 
 variable "rdma_deployment_mode" {
@@ -70,10 +76,82 @@ variable "compute_cluster_id" {
   default     = null
 }
 
+variable "enable_cluster_network_autoscaling_mode" {
+  type        = bool
+  description = "When true, create compute-system as a dedicated cluster network (instance pool based) instead of a single BM instance."
+  default     = false
+}
+
+variable "cluster_network_node_count" {
+  type        = number
+  description = "Desired node count for the compute-system cluster network instance pool."
+  default     = 1
+}
+
+variable "cluster_network_enable_autoscaling" {
+  type        = bool
+  description = "Enable OCI autoscaling for the compute-system cluster network instance pool."
+  default     = false
+}
+
+variable "cluster_network_autoscaling_min_nodes" {
+  type        = number
+  description = "Minimum node count for compute-system cluster-network autoscaling."
+  default     = 1
+}
+
+variable "cluster_network_autoscaling_max_nodes" {
+  type        = number
+  description = "Maximum node count for compute-system cluster-network autoscaling."
+  default     = 4
+}
+
+variable "cluster_network_autoscaling_initial_nodes" {
+  type        = number
+  description = "Initial node count for compute-system cluster-network autoscaling."
+  default     = 1
+}
+
+variable "cluster_network_autoscaling_cooldown_seconds" {
+  type        = number
+  description = "Autoscaling cooldown period in seconds for compute-system cluster network."
+  default     = 300
+}
+
+variable "cluster_network_autoscaling_scale_out_threshold_percent" {
+  type        = number
+  description = "CPU utilization percent threshold for compute-system cluster-network scale-out."
+  default     = 75
+}
+
+variable "cluster_network_autoscaling_scale_in_threshold_percent" {
+  type        = number
+  description = "CPU utilization percent threshold for compute-system cluster-network scale-in."
+  default     = 30
+}
+
+variable "cluster_network_autoscaling_scale_out_by" {
+  type        = number
+  description = "Node increment for each compute-system autoscaling scale-out action."
+  default     = 1
+}
+
+variable "cluster_network_autoscaling_scale_in_by" {
+  type        = number
+  description = "Node decrement for each compute-system autoscaling scale-in action."
+  default     = 1
+}
+
 variable "compute_system_name" {
   type        = string
   description = "Role label for the compute-system BM."
   default     = "compute-system"
+}
+
+variable "compute_system_short_name" {
+  type        = string
+  description = "Short role label used for display names."
+  default     = "compute"
 }
 
 variable "xpd_name" {

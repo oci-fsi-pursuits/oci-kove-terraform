@@ -26,7 +26,7 @@ resource "oci_core_virtual_network" "this" {
   compartment_id = var.compartment_id
   display_name   = local.vcn_name
   dns_label      = substr(local.vcn_dns_label, 0, 15)
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 }
 
 resource "oci_core_internet_gateway" "this" {
@@ -34,21 +34,21 @@ resource "oci_core_internet_gateway" "this" {
   display_name   = local.igw_name
   enabled        = true
   vcn_id         = oci_core_virtual_network.this.id
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 }
 
 resource "oci_core_nat_gateway" "this" {
   compartment_id = var.compartment_id
   display_name   = local.nat_name
   vcn_id         = oci_core_virtual_network.this.id
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 }
 
 resource "oci_core_service_gateway" "this" {
   compartment_id = var.compartment_id
   display_name   = "${var.name_prefix}-service-gw"
   vcn_id         = oci_core_virtual_network.this.id
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 
   services {
     service_id = local.oracle_services_network.id
@@ -59,7 +59,7 @@ resource "oci_core_dhcp_options" "this" {
   compartment_id = var.compartment_id
   vcn_id         = oci_core_virtual_network.this.id
   display_name   = "${var.name_prefix}-dhcp"
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 
   options {
     type        = "DomainNameServer"
@@ -76,7 +76,7 @@ resource "oci_core_route_table" "public" {
   compartment_id = var.compartment_id
   display_name   = local.public_rt_name
   vcn_id         = oci_core_virtual_network.this.id
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 
   route_rules {
     destination       = "0.0.0.0/0"
@@ -89,7 +89,7 @@ resource "oci_core_route_table" "private" {
   compartment_id = var.compartment_id
   display_name   = local.private_rt_name
   vcn_id         = oci_core_virtual_network.this.id
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 
   route_rules {
     destination       = "0.0.0.0/0"
@@ -102,7 +102,7 @@ resource "oci_core_security_list" "public" {
   compartment_id = var.compartment_id
   display_name   = local.public_sl_name
   vcn_id         = oci_core_virtual_network.this.id
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 
   egress_security_rules {
     protocol    = "all"
@@ -175,7 +175,7 @@ resource "oci_core_security_list" "private" {
   compartment_id = var.compartment_id
   display_name   = local.private_sl_name
   vcn_id         = oci_core_virtual_network.this.id
-  freeform_tags  = var.freeform_tags
+  defined_tags   = var.defined_tags
 
   egress_security_rules {
     protocol    = "all"
@@ -226,7 +226,7 @@ resource "oci_core_subnet" "public" {
   security_list_ids          = [oci_core_security_list.public.id]
   prohibit_public_ip_on_vnic = false
   dns_label                  = "public"
-  freeform_tags              = var.freeform_tags
+  defined_tags               = var.defined_tags
 }
 
 resource "oci_core_subnet" "private" {
@@ -239,5 +239,6 @@ resource "oci_core_subnet" "private" {
   dhcp_options_id            = oci_core_dhcp_options.this.id
   prohibit_public_ip_on_vnic = true
   dns_label                  = "private"
-  freeform_tags              = var.freeform_tags
+  defined_tags               = var.defined_tags
 }
+

@@ -10,6 +10,11 @@ locals {
 
   # Single prefix for display_name fields.
   # If name_prefix_override is set, use it as-is.
-  # Otherwise compose from namespace/environment/stack_name and remove duplicates.
-  name_prefix = trimspace(var.name_prefix_override) != "" ? trimspace(var.name_prefix_override) : join("-", distinct(compact([var.namespace, var.environment, var.stack_name])))
+  # Otherwise compose from namespace/environment and remove duplicates.
+  name_prefix = trimspace(var.name_prefix_override) != "" ? trimspace(var.name_prefix_override) : join("-", distinct(compact([var.namespace, var.environment])))
+
+  defined_tags = {
+    for key, value in local.base_tags :
+    "${var.defined_tag_namespace}.${key}" => value
+  }
 }

@@ -38,7 +38,7 @@ variable "kove_environment" {
 
 variable "kove_stack_name" {
   type        = string
-  description = "Stack identifier used in naming."
+  description = "Compatibility stack identifier. Not included in default display names."
   default     = "rdma"
 }
 
@@ -50,8 +50,14 @@ variable "name_prefix_override" {
 
 variable "tags" {
   type        = map(string)
-  description = "Extra freeform tags."
+  description = "Extra defined tag values."
   default     = {}
+}
+
+variable "defined_tag_namespace" {
+  type        = string
+  description = "OCI defined tag namespace used for standard tags."
+  default     = "kove"
 }
 
 variable "instance_name_suffix" {
@@ -90,10 +96,22 @@ variable "secondary_vnic_private_ip" {
   default     = ""
 }
 
+variable "secondary_vnic_prefix" {
+  type        = string
+  description = "CIDR prefix length for the MC secondary VNIC private IP in /etc/kove/mc-instance.conf and nmcli."
+  default     = "24"
+}
+
 variable "secondary_vnic_interface" {
   type        = string
   description = "Expected Linux interface name for the secondary VNIC used in cloud-init policy routing."
   default     = "eth1"
+}
+
+variable "enable_kvm_automation" {
+  type        = bool
+  description = "Enable automated KVM/libvirt host setup and helper script creation via cloud-init."
+  default     = false
 }
 
 variable "shape" {
@@ -165,7 +183,7 @@ variable "offline_repo_tarball_sha256" {
 variable "offline_rpm_packages" {
   type        = string
   description = "Space-separated package names installed from the offline RPM repository when offline_repo_tarball_url is set."
-  default     = "qemu-kvm libvirt virt-install qemu-img libguestfs-tools-c python3"
+  default     = "qemu-kvm libvirt-daemon-kvm libvirt virt-install qemu-img python3 nftables"
 }
 
 variable "setup_script_path" {
@@ -182,8 +200,8 @@ variable "guest_vm_name" {
 
 variable "guest_disk_path" {
   type        = string
-  description = "Default KVM guest qcow2 path used by setup helper script."
-  default     = "/var/lib/libvirt/images/kove-mc.qcow2"
+  description = "Internal converted guest disk path used by setup helper script."
+  default     = "/var/lib/libvirt/images/kove-mc.img"
 }
 
 variable "guest_memory_mb" {

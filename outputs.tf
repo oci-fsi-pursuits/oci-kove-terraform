@@ -93,11 +93,15 @@ output "mc_public_ip" {
 }
 
 output "compute_system_instance_id" {
-  value = var.enable_compute_system ? module.compute_system[0].instance_id : null
+  value = var.enable_compute_system ? try(module.compute_system[0].instance_id, null) : null
 }
 
 output "compute_system_private_ip" {
-  value = var.enable_compute_system ? module.compute_system[0].private_ip : null
+  value = var.enable_compute_system ? try(module.compute_system[0].private_ip, null) : null
+}
+
+output "compute_system_cluster_network_id" {
+  value = var.enable_compute_system ? try(module.compute_system[0].cluster_network_id, null) : null
 }
 
 output "mc_deployment_mode" {

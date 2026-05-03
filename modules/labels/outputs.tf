@@ -19,6 +19,11 @@ output "name_prefix" {
 }
 
 output "tags" {
-  description = "Merged freeform tags for oci_* resources."
-  value       = local.base_tags
+  description = "Merged defined tags for oci_* resources."
+  value       = local.defined_tags
+}
+
+output "defined_tags" {
+  description = "Merged defined tags for oci_* resources."
+  value       = local.defined_tags
 }

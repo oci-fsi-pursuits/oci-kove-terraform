@@ -7,5 +7,5 @@ resource "oci_cluster_placement_groups_cluster_placement_group" "bm_rdma" {
   compartment_id               = var.compartment_ocid
   description                  = trimspace(var.cluster_placement_group_description) != "" ? trimspace(var.cluster_placement_group_description) : "RDMA bare metal placement for ${local.name_prefix}"
   name                         = trimspace(var.cluster_placement_group_name) != "" ? trimspace(var.cluster_placement_group_name) : "${local.name_prefix}-rdma-cpg"
-  freeform_tags                = local.common_tags
+  defined_tags                 = local.common_tags
 }

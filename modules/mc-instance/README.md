@@ -1,7 +1,7 @@
 # mc-instance module
 
 Deploys the MC instance. In the root deployment, this is the management VM.
-Cloud-init is applied in both deployment modes.
+Cloud-init KVM/libvirt automation is controlled by `enable_kvm_automation` (root input: `mc_enable_kvm_automation`, default `false`).
 
 For the end-to-end operator workflow, see [../../docs/complete-mc-setup.md](../../docs/complete-mc-setup.md). For offline package installation, see [../../docs/complete-mc-setup-offline.md](../../docs/complete-mc-setup-offline.md).
 
@@ -22,25 +22,20 @@ The root module resolves the MC image from `mc_custom_image_ocid` when set, othe
 - ocpus: `3`
 - memory: `32` GB
 
-## Secondary VNIC support
+## Secondary VNIC behavior
 
-The module can optionally attach a second VNIC to the MC host:
+The root module always attaches a secondary VNIC for the MC host.
+It uses the platform private subnet from the root deployment, lets OCI assign the private IP dynamically, and exposes it to the host as `eth1`.
 
-- `secondary_vnic_enabled = true`
-- `secondary_vnic_subnet_id = "ocid1.subnet..."`
-- optional `secondary_vnic_private_ip`
-- optional `secondary_vnic_interface` (default `eth1`)
-
-Cloud-init includes a boot-time routing helper that dynamically discovers the secondary interface IP/subnet/gateway and configures:
+When KVM automation is enabled, cloud-init includes a boot-time routing helper that discovers the secondary interface IP/subnet/gateway and configures:
 
 - `rt_tables` entry (`200 vnic2`)
 - source-based routes/rules for the secondary IP
 - `rp_filter=2` (loose mode) for multi-VNIC policy routing
 
-Cloud-init also installs a boot-time MC forwarding helper that dynamically discovers:
+When KVM automation is enabled, cloud-init also installs a boot-time MC forwarding helper that discovers:
 
-- primary VNIC interface/IP (from default route)
-- secondary VNIC interface/IP (from `secondary_vnic_interface`)
+- secondary VNIC interface/IP (from config, then OCI metadata fallback)
 - guest VM IP from libvirt DHCP/leases
 
 Then it applies nftables DNAT/FORWARD rules for:
@@ -49,20 +44,25 @@ Then it applies nftables DNAT/FORWARD rules for:
 - `443 -> guest:443`
 - `8443 -> guest:8443`
 
+Forwarding is bound to the secondary VNIC only.
+
 This is wired as a systemd oneshot (`kove-mc-port-forwarding.service`) so forwarding is re-applied on boot.
+
+When KVM automation is disabled, follow [../../docs/mc-setup-manual-end-to-end.md](../../docs/mc-setup-manual-end-to-end.md).
 
 ## Manual completion flow
 
-1. Copy OVA/qcow2 to the MC host.
-2. Convert to qcow2 if needed and place at `/var/lib/libvirt/images/kove-mc.qcow2`.
-3. Run:
+1. Copy the OVA to the MC host user's home directory.
+2. Run:
 
 ```bash
 sudo /opt/kove/setup-kove-mc.sh
 ```
 
-Or pass explicit values:
+The helper converts the OVA/VMDK input for libvirt, configures secondary-VNIC routing, imports the guest, and reapplies forwarding. Use `sudo virsh --connect qemu:///system ...` for checks; plain `virsh` can prompt for root authentication through polkit.
+
+Or pass explicit values, including an image path:
 
 ```bash
-sudo /opt/kove/setup-kove-mc.sh kove-mc /var/lib/libvirt/images/kove-mc.qcow2 2 8192
+sudo /opt/kove/setup-kove-mc.sh kove-mc /home/cloud-user/kove-mc.ova 2 8192
 ```

@@ -19,7 +19,7 @@ resource "oci_core_compute_cluster" "bm_compute" {
   availability_domain = local.cluster_ad
   compartment_id      = var.compartment_ocid
   display_name        = local.compute_cluster_name
-  freeform_tags       = local.common_tags
+  defined_tags        = local.common_tags
 }
 
 resource "oci_core_instance" "bm_nodes" {
@@ -30,10 +30,10 @@ resource "oci_core_instance" "bm_nodes" {
   compartment_id      = var.compartment_ocid
   display_name        = "${local.name_prefix}-${local.xpd_name}-${count.index + 1}"
   shape               = var.bm_node_shape
-  freeform_tags = merge(local.common_tags, {
-    node_role  = local.xpd_name
-    node_index = tostring(count.index + 1)
-    node_pool  = local.xpd_name
+  defined_tags = merge(local.common_tags, {
+    "${var.defined_tag_namespace}.node_role"  = local.xpd_name
+    "${var.defined_tag_namespace}.node_index" = tostring(count.index + 1)
+    "${var.defined_tag_namespace}.node_pool"  = local.xpd_name
   })
 
   cluster_placement_group_id = var.cluster_placement_group_enabled ? oci_cluster_placement_groups_cluster_placement_group.bm_rdma[0].id : null
@@ -107,18 +107,18 @@ resource "oci_core_instance" "bm_nodes" {
 resource "oci_core_instance_configuration" "rdma_cluster_network" {
   count          = local.use_cluster_network_mode ? 1 : 0
   compartment_id = var.compartment_ocid
-  display_name   = "${local.name_prefix}-rdma-cluster-network-config"
+  display_name   = "${local.name_prefix}-${local.xpd_name}-config"
 
   instance_details {
     instance_type = "compute"
     launch_details {
       availability_domain = local.cluster_ad
       compartment_id      = var.compartment_ocid
-      display_name        = "${local.name_prefix}-${local.xpd_name}-node"
+      display_name        = "${local.name_prefix}-${local.xpd_name}"
       shape               = var.bm_node_shape
-      freeform_tags = merge(local.common_tags, {
-        node_pool = local.xpd_name
-        node_role = local.xpd_name
+      defined_tags = merge(local.common_tags, {
+        "${var.defined_tag_namespace}.node_pool" = local.xpd_name
+        "${var.defined_tag_namespace}.node_role" = local.xpd_name
       })
 
       metadata = merge(
@@ -191,16 +191,17 @@ resource "oci_core_cluster_network" "rdma" {
   }
 
   compartment_id = var.compartment_ocid
-  display_name   = "${local.name_prefix}-cluster-network"
-  freeform_tags = merge(local.common_tags, {
-    cluster_name = "${local.name_prefix}-cluster-network"
-    node_pool    = local.xpd_name
+  display_name   = "${local.name_prefix}-${local.xpd_name}-cluster-network"
+  defined_tags = merge(local.common_tags, {
+    "${var.defined_tag_namespace}.cluster_name" = "${local.name_prefix}-${local.xpd_name}-cluster-network"
+    "${var.defined_tag_namespace}.node_pool"    = local.xpd_name
   })
 
   instance_pools {
-    instance_configuration_id = oci_core_instance_configuration.rdma_cluster_network[0].id
-    size                      = var.memory_node_count
-    display_name              = "${local.name_prefix}-${local.xpd_name}-pool"
+    instance_configuration_id       = oci_core_instance_configuration.rdma_cluster_network[0].id
+    size                            = var.memory_node_count
+    display_name                    = "${local.name_prefix}-${local.xpd_name}"
+    instance_display_name_formatter = "${local.name_prefix}-${local.xpd_name}-%d"
   }
 
   placement_configuration {
@@ -217,10 +218,10 @@ resource "oci_autoscaling_auto_scaling_configuration" "cluster_network_pool" {
   count = local.use_cluster_network_mode && var.cluster_network_enable_autoscaling ? 1 : 0
 
   compartment_id       = var.compartment_ocid
-  display_name         = "${local.name_prefix}-cluster-network-autoscaling"
+  display_name         = "${local.name_prefix}-${local.xpd_name}-autoscaling"
   is_enabled           = true
   cool_down_in_seconds = var.cluster_network_autoscaling_cooldown_seconds
-  freeform_tags        = local.common_tags
+  defined_tags         = local.common_tags
 
   auto_scaling_resources {
     id   = oci_core_cluster_network.rdma[0].instance_pools[0].id
@@ -229,7 +230,7 @@ resource "oci_autoscaling_auto_scaling_configuration" "cluster_network_pool" {
 
   policies {
     policy_type  = "threshold"
-    display_name = "${local.name_prefix}-cluster-network-threshold"
+    display_name = "${local.name_prefix}-${local.xpd_name}-threshold"
     is_enabled   = true
 
     capacity {

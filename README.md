@@ -37,7 +37,7 @@ Image precedence:
 |---|---|---:|---|
 | MC/management | `modules/mc-instance` | enabled | Runs the MC host and management workflow. |
 | RDMA memory nodes | `modules/xpd-cluster` | enabled | Creates the RDMA memory-node OCI cluster network. |
-| Compute-system BM | `modules/compute-system` | enabled | Optional single BM node labeled `compute-system`. |
+| Compute-system BM | `modules/compute-system` | enabled | Optional compute-system deployment as either a single BM (default) or a dedicated cluster network + instance pool. |
 | Bastion | `modules/bastion` | enabled | Optional public jump host. |
 
 To skip the optional compute-system node while keeping memory nodes:
@@ -46,18 +46,58 @@ To skip the optional compute-system node while keeping memory nodes:
 enable_compute_system = false
 ```
 
+To keep the compute-system module enabled but switch it to dedicated compute-system cluster-network mode (instance-pool based):
+
+```hcl
+compute_system_use_cluster_network_autoscaling = true
+```
+
+This toggle defaults to `false` (single-instance remains the default behavior). In this mode, you can optionally configure **CPU-based** autoscaling for the compute-system cluster network with:
+
+```hcl
+compute_system_cluster_network_node_count                               = 1
+compute_system_cluster_network_enable_autoscaling                       = false
+compute_system_cluster_network_autoscaling_min_nodes                    = 1
+compute_system_cluster_network_autoscaling_max_nodes                    = 4
+compute_system_cluster_network_autoscaling_initial_nodes                = 1
+compute_system_cluster_network_autoscaling_cooldown_seconds             = 300
+compute_system_cluster_network_autoscaling_scale_out_threshold_percent  = 75
+compute_system_cluster_network_autoscaling_scale_in_threshold_percent   = 30
+compute_system_cluster_network_autoscaling_scale_out_by                 = 1
+compute_system_cluster_network_autoscaling_scale_in_by                  = 1
+```
+
 To skip the bastion:
 
 ```hcl
 enable_bastion = false
 ```
 
+## Naming And Tags
+
+Default display names use `kove_namespace` and `kove_environment` only. With:
+
+```hcl
+kove_namespace   = "kove"
+kove_environment = "prod"
+```
+
+RDMA memory nodes are named `kove-prod-xpd-1`, `kove-prod-xpd-2`, and so on. Compute-system nodes use `kove-prod-compute-1`, `kove-prod-compute-2`, and so on when deployed through an instance pool.
+
+Resources use OCI defined tags, not freeform tags. Set `defined_tag_namespace` to the existing OCI tag namespace that contains the standard tag keys:
+
+```hcl
+defined_tag_namespace = "kove"
+```
+
+The tag namespace and keys must exist in OCI before apply.
+
 ## RDMA Deployment Mode
 
 This repository is documented for the production `cluster_network` flow.
 
 - `cluster_network`: creates an OCI cluster network for the RDMA memory-node pool.
-- The optional `compute-system` node is a standalone BM in the private subnet.
+- The optional `compute-system` deployment defaults to a standalone BM in the private subnet, and can be switched to its own cluster-network + instance-pool mode.
 
 ## Cluster Placement Group (xpd-cluster)
 
@@ -155,7 +195,12 @@ MC/management instance:
 ```hcl
 enable_mc_instance = true
 mc_deployment_mode = "custom_image"
+mc_enable_kvm_automation = false
 ```
+
+When `mc_enable_kvm_automation = false` (default), complete MC host/guest setup manually using:
+
+- [MC host and guest — manual setup](docs/mc-setup-manual-end-to-end.md)
 
 Offline RPM tarball:
 
@@ -208,6 +253,11 @@ Host oci-kvm
 ```
 
 After connecting to `oci-bastion`, open the MC web UI from the workstation at `https://localhost:1443`.
+
+
+
+
+
 
 
 

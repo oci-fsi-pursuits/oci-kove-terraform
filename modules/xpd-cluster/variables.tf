@@ -41,7 +41,7 @@ variable "kove_environment" {
 
 variable "kove_stack_name" {
   type        = string
-  description = "Stack identifier used in naming."
+  description = "Compatibility stack identifier. Not included in default display names."
   default     = "rdma"
 }
 
@@ -65,8 +65,14 @@ variable "availability_domain" {
 
 variable "tags" {
   type        = map(string)
-  description = "Freeform tags applied to RDMA resources."
+  description = "Extra defined tag values applied to RDMA resources."
   default     = {}
+}
+
+variable "defined_tag_namespace" {
+  type        = string
+  description = "OCI defined tag namespace used for standard tags."
+  default     = "kove"
 }
 
 # ---------------------------------------------------------------------------

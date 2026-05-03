@@ -1,6 +1,4 @@
 locals {
-  labels_stack_name = "${var.kove_stack_name}-mc"
-
   ad_name = data.oci_identity_availability_domains.ads.availability_domains[0].name
   ad_used = trimspace(var.availability_domain) != "" ? trimspace(var.availability_domain) : local.ad_name
 
@@ -17,6 +15,9 @@ locals {
       guest_memory_mb             = tostring(var.guest_memory_mb)
       guest_vcpus                 = tostring(var.guest_vcpus)
       secondary_vnic_interface    = var.secondary_vnic_interface
+      secondary_vnic_private_ip   = var.secondary_vnic_private_ip
+      secondary_vnic_prefix       = var.secondary_vnic_prefix
+      secondary_vnic_enabled      = var.secondary_vnic_enabled
       offline_repo_tarball_url    = var.offline_repo_tarball_url
       offline_repo_tarball_sha256 = var.offline_repo_tarball_sha256
       offline_rpm_packages        = var.offline_rpm_packages
@@ -24,7 +25,7 @@ locals {
     "\r\n", "\n"),
   "\r", "\n")
 
-  user_data_b64 = base64encode(local.rendered_user_data)
+  user_data_b64 = base64gzip(local.rendered_user_data)
 
   resolved_custom_image_id = trimspace(var.custom_image_ocid)
   resolved_base_image_id = trimspace(var.base_image_ocid) != "" ? trimspace(var.base_image_ocid) : (

@@ -1,9 +1,10 @@
 # Terraform
-.terraform/
-.terraform.lock.hcl
+**/.terraform/
+**/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *.tfvars
+*.tfvars.json
 !*.tfvars.example
 crash.log
 crash.*.log
@@ -18,8 +19,17 @@ terraform.rc
 # Secrets
 secrets.auto.tfvars
 *.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
 .env
 .env.*
+.oci/
 
 # Internal QA/logging notes
 docs/qa-progress-log.md
@@ -27,10 +37,24 @@ docs/qa-progress-log.md
 # Archived/removed content
 examples/
 modules/compute-cluster/
-modules/xpd-cluster/README_ALIAS.md
 output/
 modules/oke/
+
+# Terraform plans and rendered plan output
+*.tfplan
+*.plan
 tfplan-*.bin
+tfplan-*.json
 
 # Local/generated tooling and offline RPM repos
 tools/
+
+# Kove software bundles and VM images
+*.ova
+*.vmdk
+*.qcow2
+*.img
+*.iso
+*.tar.gz
+*.tgz
+*.zip

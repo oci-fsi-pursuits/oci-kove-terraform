@@ -1,5 +1,5 @@
 locals {
-  # From module.labels: {namespace}-{environment}-{stack_name}
+  # From module.labels: {namespace}-{environment}
   name_prefix = module.labels.name_prefix
 
   ad_name = data.oci_identity_availability_domains.ads.availability_domains[0].name
@@ -7,7 +7,6 @@ locals {
   host_label_prefix = length(trimspace(var.host_label_prefix)) > 0 ? substr(replace(replace(lower(trimspace(var.host_label_prefix)), "-", ""), "_", ""), 0, 12) : ""
 
   compute_cluster_name   = "${local.name_prefix}-compute-cluster"
-  bm_name_prefix         = "${local.name_prefix}-bm"
   xpd_name               = trimspace(var.xpd_name)
   rdma_host_label_prefix = local.host_label_prefix != "" ? substr(local.host_label_prefix, 0, 8) : ""
 
@@ -40,7 +39,7 @@ locals {
   ] : []
   cluster_network_memory_private_ips = local.use_cluster_network_mode ? data.oci_core_instance.cluster_network_instances[*].private_ip : []
 
-  common_tags = module.labels.tags
+  common_tags = module.labels.defined_tags
 
   cloud_init_src_path = "${path.module}/cloud_init/kove-xpd-cloud-init-standalone-runtime.txt"
 

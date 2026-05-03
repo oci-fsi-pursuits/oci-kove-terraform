@@ -1,10 +1,10 @@
 module "labels" {
   source = "../labels"
 
-  namespace   = var.kove_namespace
-  environment = var.kove_environment
-  stack_name  = var.kove_stack_name
-  name_prefix_override = var.name_prefix_override
+  namespace             = var.kove_namespace
+  environment           = var.kove_environment
+  name_prefix_override  = var.name_prefix_override
+  defined_tag_namespace = var.defined_tag_namespace
 
   additional_tags = merge(var.tags, {
     workload = "compute-system"
@@ -13,11 +13,14 @@ module "labels" {
 
 locals {
   use_compute_cluster_mode = trimspace(var.rdma_deployment_mode) == "compute_cluster"
+  use_cluster_network_mode = var.enable_cluster_network_autoscaling_mode
+  create_compute_system    = !local.use_cluster_network_mode
   host_label_prefix        = length(trimspace(var.host_label_prefix)) > 0 ? substr(replace(replace(lower(trimspace(var.host_label_prefix)), "-", ""), "_", ""), 0, 12) : ""
   rdma_host_label_prefix   = local.host_label_prefix != "" ? substr(local.host_label_prefix, 0, 8) : ""
   hostname_label           = local.rdma_host_label_prefix != "" ? "${local.rdma_host_label_prefix}csys" : "compsys"
   instance_create_timeout  = trimspace(var.instance_create_timeout) != "" ? var.instance_create_timeout : "2h"
   compute_system_name      = trimspace(var.compute_system_name)
+  compute_role_name        = trimspace(var.compute_system_short_name) != "" ? trimspace(var.compute_system_short_name) : replace(local.compute_system_name, "-system", "")
   cloud_init_src_path      = trimspace(var.cloud_init_template_path) != "" ? trimspace(var.cloud_init_template_path) : "${path.module}/../xpd-cluster/cloud_init/kove-xpd-cloud-init-standalone-runtime.txt"
 
   cloud_init_vars = merge(
@@ -49,6 +52,8 @@ locals {
 }
 
 resource "oci_core_instance" "compute_system" {
+  count = local.create_compute_system ? 1 : 0
+
   lifecycle {
     precondition {
       condition     = trimspace(var.image_ocid) != ""
@@ -56,7 +61,7 @@ resource "oci_core_instance" "compute_system" {
     }
 
     precondition {
-      condition     = !local.use_compute_cluster_mode || try(trimspace(var.compute_cluster_id), "") != ""
+      condition     = !local.create_compute_system || !local.use_compute_cluster_mode || try(trimspace(var.compute_cluster_id), "") != ""
       error_message = "compute_cluster_id must be set when rdma_deployment_mode = compute_cluster."
     }
 
@@ -68,12 +73,12 @@ resource "oci_core_instance" "compute_system" {
 
   availability_domain = var.availability_domain
   compartment_id      = var.compartment_ocid
-  display_name        = "${module.labels.name_prefix}-${local.compute_system_name}"
+  display_name        = "${module.labels.name_prefix}-${local.compute_role_name}-1"
   shape               = var.shape
-  freeform_tags = merge(module.labels.tags, {
-    node_role  = local.compute_system_name
-    node_index = "0"
-    node_pool  = var.xpd_name
+  defined_tags = merge(module.labels.defined_tags, {
+    "${var.defined_tag_namespace}.node_role"  = local.compute_role_name
+    "${var.defined_tag_namespace}.node_index" = "1"
+    "${var.defined_tag_namespace}.node_pool"  = local.compute_role_name
   })
 
   capacity_reservation_id = trimspace(var.capacity_reservation_id) != "" ? var.capacity_reservation_id : null
@@ -139,4 +144,184 @@ resource "oci_core_instance" "compute_system" {
     update = "30m"
     delete = "30m"
   }
+}
+
+resource "oci_core_instance_configuration" "compute_system_cluster_network" {
+  count          = local.use_cluster_network_mode ? 1 : 0
+  compartment_id = var.compartment_ocid
+  display_name   = "${module.labels.name_prefix}-${local.compute_role_name}-config"
+
+  instance_details {
+    instance_type = "compute"
+    launch_details {
+      availability_domain = var.availability_domain
+      compartment_id      = var.compartment_ocid
+      display_name        = "${module.labels.name_prefix}-${local.compute_role_name}"
+      shape               = var.shape
+      defined_tags = merge(module.labels.defined_tags, {
+        "${var.defined_tag_namespace}.node_pool" = local.compute_role_name
+        "${var.defined_tag_namespace}.node_role" = local.compute_role_name
+      })
+
+      metadata = {
+        ssh_authorized_keys = var.ssh_public_keys
+        user_data           = local.user_data_b64
+      }
+
+      agent_config {
+        are_all_plugins_disabled = false
+        is_management_disabled   = !var.use_compute_agent
+        is_monitoring_disabled   = false
+        plugins_config {
+          name          = "OS Management Service Agent"
+          desired_state = "DISABLED"
+        }
+        dynamic "plugins_config" {
+          for_each = var.use_compute_agent ? ["ENABLED"] : ["DISABLED"]
+          content {
+            name          = "Compute HPC RDMA Authentication"
+            desired_state = plugins_config.value
+          }
+        }
+        dynamic "plugins_config" {
+          for_each = var.use_compute_agent ? ["ENABLED"] : ["DISABLED"]
+          content {
+            name          = "Compute HPC RDMA Auto-Configuration"
+            desired_state = plugins_config.value
+          }
+        }
+      }
+
+      dynamic "platform_config" {
+        for_each = var.generic_platform_config ? [1] : []
+        content {
+          type                                           = "GENERIC_BM"
+          is_symmetric_multi_threading_enabled           = var.smt_enabled
+          is_access_control_service_enabled              = false
+          is_input_output_memory_management_unit_enabled = false
+          are_virtual_instructions_enabled               = false
+          numa_nodes_per_socket                          = var.numa_nodes_per_socket
+          percentage_of_cores_enabled                    = 100
+        }
+      }
+
+      source_details {
+        source_type             = "image"
+        image_id                = trimspace(var.image_ocid)
+        boot_volume_size_in_gbs = var.boot_volume_size_gbs
+        boot_volume_vpus_per_gb = 30
+      }
+
+      create_vnic_details {
+        subnet_id        = var.subnet_id
+        assign_public_ip = false
+      }
+    }
+  }
+
+  source = "NONE"
+}
+
+resource "oci_core_cluster_network" "compute_system" {
+  count = local.use_cluster_network_mode ? 1 : 0
+
+  compartment_id = var.compartment_ocid
+  display_name   = "${module.labels.name_prefix}-${local.compute_role_name}-cluster-network"
+  defined_tags = merge(module.labels.defined_tags, {
+    "${var.defined_tag_namespace}.cluster_name" = "${module.labels.name_prefix}-${local.compute_role_name}-cluster-network"
+    "${var.defined_tag_namespace}.node_pool"    = local.compute_role_name
+  })
+
+  instance_pools {
+    instance_configuration_id       = oci_core_instance_configuration.compute_system_cluster_network[0].id
+    size                            = var.cluster_network_node_count
+    display_name                    = "${module.labels.name_prefix}-${local.compute_role_name}"
+    instance_display_name_formatter = "${module.labels.name_prefix}-${local.compute_role_name}-%d"
+  }
+
+  placement_configuration {
+    availability_domain = var.availability_domain
+    primary_subnet_id   = var.subnet_id
+  }
+
+  timeouts {
+    create = local.instance_create_timeout
+  }
+}
+
+resource "oci_autoscaling_auto_scaling_configuration" "compute_system_pool" {
+  count = local.use_cluster_network_mode && var.cluster_network_enable_autoscaling ? 1 : 0
+
+  compartment_id       = var.compartment_ocid
+  display_name         = "${module.labels.name_prefix}-${local.compute_role_name}-autoscaling"
+  is_enabled           = true
+  cool_down_in_seconds = var.cluster_network_autoscaling_cooldown_seconds
+  defined_tags         = module.labels.defined_tags
+
+  auto_scaling_resources {
+    id   = oci_core_cluster_network.compute_system[0].instance_pools[0].id
+    type = "instancePool"
+  }
+
+  policies {
+    policy_type  = "threshold"
+    display_name = "${module.labels.name_prefix}-${local.compute_role_name}-threshold"
+    is_enabled   = true
+
+    capacity {
+      initial = var.cluster_network_autoscaling_initial_nodes
+      min     = var.cluster_network_autoscaling_min_nodes
+      max     = var.cluster_network_autoscaling_max_nodes
+    }
+
+    rules {
+      display_name = "scale-out-cpu"
+
+      metric {
+        metric_type = "CPU_UTILIZATION"
+        threshold {
+          operator = "GT"
+          value    = var.cluster_network_autoscaling_scale_out_threshold_percent
+        }
+      }
+
+      action {
+        type  = "CHANGE_COUNT_BY"
+        value = var.cluster_network_autoscaling_scale_out_by
+      }
+    }
+
+    rules {
+      display_name = "scale-in-cpu"
+
+      metric {
+        metric_type = "CPU_UTILIZATION"
+        threshold {
+          operator = "LT"
+          value    = var.cluster_network_autoscaling_scale_in_threshold_percent
+        }
+      }
+
+      action {
+        type  = "CHANGE_COUNT_BY"
+        value = -1 * var.cluster_network_autoscaling_scale_in_by
+      }
+    }
+  }
+}
+
+data "oci_core_cluster_network_instances" "compute_system" {
+  count = local.use_cluster_network_mode ? 1 : 0
+
+  compartment_id     = var.compartment_ocid
+  cluster_network_id = oci_core_cluster_network.compute_system[0].id
+}
+
+data "oci_core_instance" "cluster_network_instances" {
+  for_each = local.use_cluster_network_mode ? {
+    for instance in data.oci_core_cluster_network_instances.compute_system[0].instances :
+    instance["id"] => instance
+  } : {}
+
+  instance_id = each.key
 }

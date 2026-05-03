@@ -41,33 +41,15 @@ sudo cloud-init status --long
 sudo tail -n 200 /var/log/cloud-init-output.log
 ```
 
-## Copy the MC disk image
+## Copy the MC image
 
-Copy the MC qcow2 disk image to the path expected by Terraform. The default path is:
-
-```text
-/var/lib/libvirt/images/kove-mc.qcow2
-```
-
-Example:
+Copy the MC OVA file into the MC host user's home directory:
 
 ```bash
-sudo mkdir -p /var/lib/libvirt/images
-sudo cp /path/to/kove-mc.qcow2 /var/lib/libvirt/images/kove-mc.qcow2
-sudo chown root:root /var/lib/libvirt/images/kove-mc.qcow2
-sudo chmod 0644 /var/lib/libvirt/images/kove-mc.qcow2
-sudo restorecon -Rv /var/lib/libvirt/images 2>/dev/null || true
+scp kove-mc-2503-mcvirt.ova cloud-user@<mc-host-private-ip>:~/
 ```
 
-If you have an OVA instead of a qcow2 file, extract and convert it first:
-
-```bash
-mkdir -p ~/kove-mc-ova
-tar -xf /path/to/kove-mc.ova -C ~/kove-mc-ova
-sudo qemu-img convert -p -f vmdk -O qcow2 \
-  ~/kove-mc-ova/*.vmdk \
-  /var/lib/libvirt/images/kove-mc.qcow2
-```
+The setup helper searches the sudo caller's home directory for the first `.ova` file, converts it for libvirt, and imports the VM. You can also pass an explicit OVA path as the second argument.
 
 ## Import and start the MC guest
 
@@ -82,7 +64,7 @@ If you changed the defaults, pass explicit values:
 ```bash
 sudo /opt/kove/setup-kove-mc.sh \
   kove-mc \
-  /var/lib/libvirt/images/kove-mc.qcow2 \
+  /home/cloud-user/kove-mc.ova \
   2 \
   8192
 ```
@@ -93,6 +75,8 @@ Confirm the guest is running:
 sudo virsh --connect qemu:///system list --all
 sudo virsh --connect qemu:///system domifaddr kove-mc --full
 ```
+
+Use `sudo virsh` for system libvirt commands. Running `virsh --connect qemu:///system ...` without sudo can prompt for root authentication through polkit.
 
 ## Validate forwarded access
 

@@ -19,7 +19,7 @@ variable "name_prefix" {
   description = "Prefix for display_name on all resources (e.g. kove-dev-rdma)."
 }
 
-variable "freeform_tags" {
+variable "defined_tags" {
   type        = map(string)
   description = "Tags applied to each resource."
   default     = {}

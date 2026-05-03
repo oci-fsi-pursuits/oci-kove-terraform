@@ -16,3 +16,5 @@ Cluster placement groups are **not** configured in this module. They are part of
 > Cluster placement groups can reduce placement flexibility. In constrained AD/FD capacity conditions, enabling them may increase launch delays or capacity-related provisioning failures.
 
 Does **not** handle attaching to an existing VCN; the stack passes through existing subnet OCIDs when `use_existing_vcn = true`.
+
+Resource tags are supplied as OCI defined tags from the root module.

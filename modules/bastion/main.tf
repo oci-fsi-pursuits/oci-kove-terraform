@@ -1,10 +1,10 @@
 module "labels" {
   source = "../labels"
 
-  namespace   = var.kove_namespace
-  environment = var.kove_environment
-  stack_name  = var.kove_stack_name
-  name_prefix_override = var.name_prefix_override
+  namespace             = var.kove_namespace
+  environment           = var.kove_environment
+  name_prefix_override  = var.name_prefix_override
+  defined_tag_namespace = var.defined_tag_namespace
 
   additional_tags = merge(var.tags, {
     workload = "bastion"
@@ -28,7 +28,7 @@ resource "oci_core_instance" "bastion" {
   availability_domain = var.availability_domain
   display_name        = "${module.labels.name_prefix}-bastion"
   shape               = var.shape
-  freeform_tags       = module.labels.tags
+  defined_tags        = module.labels.defined_tags
 
   shape_config {
     ocpus         = var.ocpus
