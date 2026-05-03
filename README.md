@@ -2,6 +2,8 @@
 
 Terraform configuration for deploying a Kove RDMA shared-memory platform on Oracle Cloud Infrastructure (OCI).
 
+![Kove architecture](docs/images/kove-architecture.png)
+
 ## What This Deploys
 
 The root module can deploy:
@@ -253,6 +255,7 @@ Host oci-kvm
 ```
 
 After connecting to `oci-bastion`, open the MC web UI from the workstation at `https://localhost:1443`.
+
 
 
 
