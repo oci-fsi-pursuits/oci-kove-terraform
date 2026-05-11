@@ -4,8 +4,8 @@ Reusable Terraform modules used by the root deployment.
 
 | Module | Purpose |
 |---|---|
-| [xpd-cluster](./xpd-cluster/) | RDMA memory-node infrastructure. |
-| [mc-instance](./mc-instance/) | MC/management instance. |
+| [xpd-cluster](./xpd-cluster/) | XPD RDMA memory-node infrastructure. |
+| [mc-instance](./mc-instance/) | Management Console (MC) instance. |
 | [compute-system](./compute-system/) | Optional single BM node labeled `compute-system`. |
 | [bastion](./bastion/) | Optional public jump host. |
 | [networking](./networking/) | VCN, public/private subnets, gateways, route tables, and security lists. |

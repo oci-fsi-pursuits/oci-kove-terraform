@@ -22,7 +22,6 @@ variableGroups:
 
   - title: "Topology"
     variables:
-      - kove_namespace
       - kove_environment
       - enable_defined_tags
       - defined_tag_namespace
@@ -30,11 +29,25 @@ variableGroups:
       - availability_domain
       - rdma_deployment_mode
       - memory_node_count
-      - enable_compute_system
-      - compute_system_name
       - xpd_name
       - enable_bastion
       - enable_mc_instance
+
+  - title: "Compute-system"
+    variables:
+      - enable_compute_system
+      - compute_system_name
+      - compute_system_use_cluster_network
+      - compute_system_cluster_network_node_count
+      - compute_system_cluster_network_enable_autoscaling
+      - compute_system_cluster_network_autoscaling_min_nodes
+      - compute_system_cluster_network_autoscaling_max_nodes
+      - compute_system_cluster_network_autoscaling_initial_nodes
+      - compute_system_cluster_network_autoscaling_cooldown_seconds
+      - compute_system_cluster_network_autoscaling_scale_out_threshold_percent
+      - compute_system_cluster_network_autoscaling_scale_in_threshold_percent
+      - compute_system_cluster_network_autoscaling_scale_out_by
+      - compute_system_cluster_network_autoscaling_scale_in_by
 
   - title: "Networking"
     variables:
@@ -172,9 +185,11 @@ variables:
 
   kove_namespace:
     type: string
-    title: "Namespace"
-    default: "kove"
+    title: "Name namespace override"
+    description: "Optional override for display-name namespace. Empty uses defined_tag_namespace."
+    default: ""
     required: false
+    visible: false
 
   kove_environment:
     type: string
@@ -192,7 +207,7 @@ variables:
   defined_tag_namespace:
     type: string
     title: "Defined tag namespace"
-    description: "OCI defined tag namespace used for standard tags. The namespace and tag keys must already exist."
+    description: "OCI defined tag namespace used for standard tags and the default display-name prefix."
     default: "kove"
     required: false
 
@@ -234,6 +249,114 @@ variables:
     title: "Compute-system role label"
     default: "compute-system"
     required: false
+
+  compute_system_use_cluster_network:
+    type: boolean
+    title: "Compute-system cluster network"
+    description: "Deploy compute-system as a dedicated cluster network instead of a single BM instance."
+    default: false
+    required: false
+
+  compute_system_cluster_network_node_count:
+    type: number
+    title: "Compute-system cluster-network nodes"
+    default: 1
+    required: false
+    visible:
+      eq:
+        - compute_system_use_cluster_network
+        - true
+
+  compute_system_cluster_network_enable_autoscaling:
+    type: boolean
+    title: "Enable compute-system autoscaling"
+    description: "Enable CPU-based autoscaling for the compute-system cluster network."
+    default: false
+    required: false
+    visible:
+      eq:
+        - compute_system_use_cluster_network
+        - true
+
+  compute_system_cluster_network_autoscaling_min_nodes:
+    type: number
+    title: "Compute-system autoscaling min nodes"
+    default: 1
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
+
+  compute_system_cluster_network_autoscaling_max_nodes:
+    type: number
+    title: "Compute-system autoscaling max nodes"
+    default: 4
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
+
+  compute_system_cluster_network_autoscaling_initial_nodes:
+    type: number
+    title: "Compute-system autoscaling initial nodes"
+    default: 1
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
+
+  compute_system_cluster_network_autoscaling_cooldown_seconds:
+    type: number
+    title: "Compute-system autoscaling cooldown seconds"
+    default: 300
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
+
+  compute_system_cluster_network_autoscaling_scale_out_threshold_percent:
+    type: number
+    title: "Compute-system autoscaling scale-out threshold"
+    default: 75
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
+
+  compute_system_cluster_network_autoscaling_scale_in_threshold_percent:
+    type: number
+    title: "Compute-system autoscaling scale-in threshold"
+    default: 30
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
+
+  compute_system_cluster_network_autoscaling_scale_out_by:
+    type: number
+    title: "Compute-system autoscaling scale out by"
+    default: 1
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
+
+  compute_system_cluster_network_autoscaling_scale_in_by:
+    type: number
+    title: "Compute-system autoscaling scale in by"
+    default: 1
+    required: false
+    visible:
+      eq:
+        - compute_system_cluster_network_enable_autoscaling
+        - true
 
   xpd_name:
     type: string

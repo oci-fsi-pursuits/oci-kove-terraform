@@ -213,6 +213,46 @@ For SSH to the guest through the MC host (same address as above):
 ssh -p 2222 <guest-user>@<mc-secondary-vnic-ip>
 ```
 
+## Access the MC web UI
+
+On the MC host, get the secondary VNIC IP:
+
+```bash
+/usr/local/sbin/kove-oci-resolve-secondary.py ip
+```
+
+Use that output as `<mc-secondary-vnic-ip>` in your workstation SSH config:
+
+```sshconfig
+Host oci-bastion
+    HostName <bastion-public-ip>
+    User cloud-user
+    IdentityFile "C:/path/to/private.key"
+    IdentitiesOnly yes
+    LocalForward 1443 <mc-secondary-vnic-ip>:443
+
+Host oci-kvm
+    ProxyJump oci-bastion
+    HostName <mc-host-primary-private-ip>
+    User cloud-user
+    IdentityFile "C:/path/to/private.key"
+    IdentitiesOnly yes
+```
+
+Start the Kove MC web UI tunnel:
+
+```bash
+ssh oci-bastion
+```
+
+Open the UI from your workstation:
+
+```text
+https://localhost:1443
+```
+
+The `LocalForward 1443 ...` line is active only while connected with `ssh oci-bastion`. It is not activated when `oci-bastion` is used only as a `ProxyJump` for `ssh oci-kvm`.
+
 ## Troubleshooting
 
 Check cloud-init:

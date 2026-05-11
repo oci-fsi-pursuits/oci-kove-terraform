@@ -2,6 +2,8 @@
 
 Terraform configuration for deploying a Kove RDMA shared-memory platform on Oracle Cloud Infrastructure (OCI).
 
+[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/oci-fsi-pursuits/oci-kove-terraform/archive/refs/heads/main.zip)
+
 ![Kove architecture](docs/images/kove-architecture.png)
 
 ## What This Deploys
@@ -51,14 +53,14 @@ enable_compute_system = false
 To keep the compute-system module enabled but switch it to dedicated compute-system cluster-network mode (instance-pool based):
 
 ```hcl
-compute_system_use_cluster_network_autoscaling = true
+compute_system_use_cluster_network       = true
+compute_system_cluster_network_node_count = 1
 ```
 
-This toggle defaults to `false` (single-instance remains the default behavior). In this mode, you can optionally configure **CPU-based** autoscaling for the compute-system cluster network with:
+This toggle defaults to `false` (single-instance remains the default behavior). A compute-system cluster network does not require autoscaling. To enable **CPU-based** autoscaling for the compute-system cluster network, add:
 
 ```hcl
-compute_system_cluster_network_node_count                               = 1
-compute_system_cluster_network_enable_autoscaling                       = false
+compute_system_cluster_network_enable_autoscaling                       = true
 compute_system_cluster_network_autoscaling_min_nodes                    = 1
 compute_system_cluster_network_autoscaling_max_nodes                    = 4
 compute_system_cluster_network_autoscaling_initial_nodes                = 1
@@ -77,16 +79,16 @@ enable_bastion = false
 
 ## Naming And Tags
 
-Default display names use `kove_namespace` and `kove_environment` only. With:
+Default display names use `defined_tag_namespace` and `kove_environment`. With:
 
 ```hcl
-kove_namespace   = "kove"
-kove_environment = "prod"
+defined_tag_namespace = "kove"
+kove_environment      = "prod"
 ```
 
 RDMA memory nodes are named `kove-prod-xpd-1`, `kove-prod-xpd-2`, and so on. Compute-system nodes use `kove-prod-compute-1`, `kove-prod-compute-2`, and so on when deployed through an instance pool.
 
-Resources use OCI defined tags, not freeform tags. Set `defined_tag_namespace` to the existing OCI tag namespace that contains the standard tag keys:
+Resources use OCI defined tags, not freeform tags. Set `defined_tag_namespace` to the existing OCI tag namespace that contains the standard tag keys. That same value is also used as the default naming namespace, so operators only need to set it once:
 
 ```hcl
 enable_defined_tags   = true
@@ -268,18 +270,46 @@ sudo fips-mode-setup --disable
 sudo reboot
 ```
 
-- With the current architecture, MC web UI access is reached through SSH tunneling: workstation to bastion, then into the private KVM host and MC guest. Example config to tunnel to guest MC on KVM host.
+- With the current architecture, the Kove MC web UI is reached through an SSH tunnel on the bastion to the **MC secondary VNIC IP**.
 
-```sshconfig
-Host oci-kvm
-    ProxyJump oci-bastion
-    HostName 10.0.2.XX
-    User cloud-user
-    IdentityFile <path to private key>
-    LocalForward 5900 127.0.0.1:5900
+On the MC host, get the secondary VNIC IP:
+
+```bash
+/usr/local/sbin/kove-oci-resolve-secondary.py ip
 ```
 
-After connecting to `oci-bastion`, open the MC web UI from the workstation at `https://localhost:1443`.
+Use that output as `<mc-secondary-vnic-ip>` in your workstation SSH config:
+
+```sshconfig
+Host oci-bastion
+    HostName <bastion-public-ip>
+    User cloud-user
+    IdentityFile "C:/path/to/private.key"
+    IdentitiesOnly yes
+    LocalForward 1443 <mc-secondary-vnic-ip>:443
+
+Host oci-kvm
+    ProxyJump oci-bastion
+    HostName <mc-host-primary-private-ip>
+    User cloud-user
+    IdentityFile "C:/path/to/private.key"
+    IdentitiesOnly yes
+```
+
+Start the Kove MC web UI tunnel with:
+
+```bash
+ssh oci-bastion
+```
+
+Then open the UI from your workstation:
+
+```text
+https://localhost:1443
+```
+
+The `LocalForward 1443 ...` line is active only while connected with `ssh oci-bastion`. It is not activated when `oci-bastion` is used only as a `ProxyJump` for `ssh oci-kvm`.
+
 
 
 

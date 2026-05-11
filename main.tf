@@ -21,10 +21,10 @@ module "rdma_platform" {
   compartment_ocid     = var.compartment_ocid
   ssh_public_key       = var.ssh_public_key
 
-  kove_namespace        = var.kove_namespace
+  kove_namespace        = local.kove_namespace
   kove_environment      = var.kove_environment
   name_prefix_override  = var.xpd_name_prefix
-  defined_tag_namespace = var.defined_tag_namespace
+  defined_tag_namespace = local.defined_tag_namespace
   enable_defined_tags   = var.enable_defined_tags
   host_label_prefix     = var.host_label_prefix
   availability_domain   = var.availability_domain
@@ -89,10 +89,10 @@ module "bastion" {
   availability_domain = module.rdma_platform.availability_domain_used
   ssh_public_key      = var.ssh_public_key
 
-  kove_namespace        = var.kove_namespace
+  kove_namespace        = local.kove_namespace
   kove_environment      = var.kove_environment
   name_prefix_override  = var.bastion_name_prefix
-  defined_tag_namespace = var.defined_tag_namespace
+  defined_tag_namespace = local.defined_tag_namespace
   enable_defined_tags   = var.enable_defined_tags
   host_label_prefix     = var.host_label_prefix
   tags                  = var.tags
@@ -113,16 +113,16 @@ module "compute_system" {
   availability_domain = module.rdma_platform.availability_domain_used
   ssh_public_keys     = module.rdma_platform.cluster_ssh_authorized_keys
 
-  kove_namespace        = var.kove_namespace
+  kove_namespace        = local.kove_namespace
   kove_environment      = var.kove_environment
   name_prefix_override  = var.compute_system_name_prefix
-  defined_tag_namespace = var.defined_tag_namespace
+  defined_tag_namespace = local.defined_tag_namespace
   enable_defined_tags   = var.enable_defined_tags
   host_label_prefix     = var.host_label_prefix
   tags                  = var.tags
 
   rdma_deployment_mode                                    = var.rdma_deployment_mode
-  enable_cluster_network_autoscaling_mode                 = var.compute_system_use_cluster_network_autoscaling
+  enable_cluster_network_autoscaling_mode                 = var.compute_system_use_cluster_network || var.compute_system_use_cluster_network_autoscaling
   cluster_network_node_count                              = var.compute_system_cluster_network_node_count
   cluster_network_enable_autoscaling                      = var.compute_system_cluster_network_enable_autoscaling
   cluster_network_autoscaling_min_nodes                   = var.compute_system_cluster_network_autoscaling_min_nodes
@@ -166,10 +166,10 @@ module "mc_instance" {
   availability_domain = trimspace(var.mc_availability_domain) != "" ? trimspace(var.mc_availability_domain) : module.rdma_platform.availability_domain_used
   ssh_public_key      = var.ssh_public_key
 
-  kove_namespace        = var.kove_namespace
+  kove_namespace        = local.kove_namespace
   kove_environment      = var.kove_environment
   name_prefix_override  = var.mc_name_prefix
-  defined_tag_namespace = var.defined_tag_namespace
+  defined_tag_namespace = local.defined_tag_namespace
   enable_defined_tags   = var.enable_defined_tags
   tags                  = var.tags
 

@@ -68,8 +68,8 @@ output "bm_console_vnc_connection_strings" {
   sensitive = true
 }
 
-output "oke_prerequisites" {
-  value = module.rdma_platform.oke_prerequisites
+output "platform_network" {
+  value = module.rdma_platform.platform_network
 }
 
 output "existing_vcns_in_compartment" {

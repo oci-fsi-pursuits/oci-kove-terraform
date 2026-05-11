@@ -80,8 +80,8 @@ output "bm_console_vnc_connection_strings" {
   sensitive   = true
 }
 
-output "oke_prerequisites" {
-  description = "Subnet, route tables, and compartment references for consumers such as OKE modules."
+output "platform_network" {
+  description = "Subnet, route table, and compartment references for platform consumers."
   value = {
     compartment_ocid         = var.compartment_ocid
     tenancy_ocid             = var.tenancy_ocid

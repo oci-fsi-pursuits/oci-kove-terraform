@@ -1,5 +1,9 @@
-# Recommended template: existing VCN + cluster_network + bastion + MC/management.
+# Recommended template: existing VCN + RDMA cluster network + bastion + MC/management.
 # Copy to terraform.tfvars or use -var-file. Do not commit secrets.
+
+# ---------------------------------------------------------------------------
+# Tenancy and access
+# ---------------------------------------------------------------------------
 
 tenancy_ocid     = "ocid1.tenancy.oc1..REPLACE_ME"
 region           = "eu-frankfurt-1"
@@ -9,15 +13,25 @@ ssh_public_key = <<-EOT
 ssh-rsa REPLACE_ME
 EOT
 
-kove_namespace        = "kove"
-kove_environment      = "prod"
-# Set true after the OCI defined-tag namespace and keys are created.
-enable_defined_tags   = false
+# ---------------------------------------------------------------------------
+# Naming and defined tags
+# ---------------------------------------------------------------------------
+
+# This value is used for OCI defined tags and the default name prefix.
+# With environment = "prod", nodes are named like kove-prod-xpd-1.
 defined_tag_namespace = "kove"
+kove_environment      = "prod"
+
+# Set true after the OCI defined-tag namespace and keys are created.
+enable_defined_tags = false
 
 tags = {
   workload = "rdma-platform"
 }
+
+# ---------------------------------------------------------------------------
+# Placement and networking
+# ---------------------------------------------------------------------------
 
 # Example: pILZ:EU-FRANKFURT-1-AD-2
 availability_domain = "REPLACE_ME"
@@ -27,34 +41,22 @@ existing_vcn_id            = "ocid1.vcn.oc1.eu-frankfurt-1.REPLACE_ME"
 existing_public_subnet_id  = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 existing_private_subnet_id = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
-# Images: one shared RHEL 8.10 base image, with optional per-role overrides.
+# ---------------------------------------------------------------------------
+# Images
+# ---------------------------------------------------------------------------
+
 rhel8_10_image_ocid        = "ocid1.image.oc1.eu-frankfurt-1.REPLACE_ME"
 bm_node_custom_image_ocid  = ""
 mc_custom_image_ocid       = ""
 bastion_custom_image_ocid  = ""
 
-# RDMA memory-node infrastructure.
+# ---------------------------------------------------------------------------
+# RDMA memory nodes
+# ---------------------------------------------------------------------------
+
 rdma_deployment_mode = "cluster_network"
 memory_node_count    = 2
 xpd_name             = "xpd"
-
-# Optional compute-system BM. Disable this without affecting memory nodes.
-enable_compute_system = true
-compute_system_name   = "compute-system"
-
-# Optional: switch compute-system from single-BM mode to dedicated
-# cluster-network + instance-pool mode.
-# compute_system_use_cluster_network_autoscaling = true
-# compute_system_cluster_network_node_count = 1
-# compute_system_cluster_network_enable_autoscaling = false
-# compute_system_cluster_network_autoscaling_min_nodes = 1
-# compute_system_cluster_network_autoscaling_max_nodes = 4
-# compute_system_cluster_network_autoscaling_initial_nodes = 1
-# compute_system_cluster_network_autoscaling_cooldown_seconds = 300
-# compute_system_cluster_network_autoscaling_scale_out_threshold_percent = 75  # CPU%
-# compute_system_cluster_network_autoscaling_scale_in_threshold_percent = 30   # CPU%
-# compute_system_cluster_network_autoscaling_scale_out_by = 1
-# compute_system_cluster_network_autoscaling_scale_in_by = 1
 
 # Optional RDMA cluster placement group (xpd-cluster).
 # WARNING: can reduce placement flexibility and increase capacity-related launch failures in constrained AD/FD conditions.
@@ -63,7 +65,7 @@ compute_system_name   = "compute-system"
 # cluster_placement_group_name        = "kove-rdma-cpg"
 # cluster_placement_group_description = "RDMA bare metal placement group"
 
-# Cluster-network autoscaling.
+# RDMA memory-node cluster-network autoscaling.
 cluster_network_enable_autoscaling                      = true
 cluster_network_autoscaling_min_nodes                   = 2
 cluster_network_autoscaling_max_nodes                   = 8
@@ -74,6 +76,35 @@ cluster_network_autoscaling_scale_in_threshold_percent  = 30
 cluster_network_autoscaling_scale_out_by                = 1
 cluster_network_autoscaling_scale_in_by                 = 1
 
+# ---------------------------------------------------------------------------
+# Compute-system
+# ---------------------------------------------------------------------------
+
+# Disable this without affecting RDMA memory nodes.
+enable_compute_system = true
+compute_system_name   = "compute-system"
+
+# Default compute-system mode is a single BM instance.
+# To build compute-system as a dedicated cluster network without autoscaling:
+# compute_system_use_cluster_network = true
+# compute_system_cluster_network_node_count = 1
+
+# Optional compute-system cluster-network autoscaling.
+# Only set these when compute_system_use_cluster_network = true and autoscaling is wanted.
+# compute_system_cluster_network_enable_autoscaling = true
+# compute_system_cluster_network_autoscaling_min_nodes = 1
+# compute_system_cluster_network_autoscaling_max_nodes = 4
+# compute_system_cluster_network_autoscaling_initial_nodes = 1
+# compute_system_cluster_network_autoscaling_cooldown_seconds = 300
+# compute_system_cluster_network_autoscaling_scale_out_threshold_percent = 75  # CPU%
+# compute_system_cluster_network_autoscaling_scale_in_threshold_percent = 30   # CPU%
+# compute_system_cluster_network_autoscaling_scale_out_by = 1
+# compute_system_cluster_network_autoscaling_scale_in_by = 1
+
+# ---------------------------------------------------------------------------
+# Bare-metal runtime
+# ---------------------------------------------------------------------------
+
 use_compute_agent              = true
 bm_generic_platform_config     = false
 bm_capacity_reservation_id     = ""
@@ -82,10 +113,16 @@ cluster_network_create_timeout = "2h"
 bm_imds_ssh_key_bootstrap      = true
 create_bm_console_connections  = false
 
-# Bastion jump host.
+# ---------------------------------------------------------------------------
+# Bastion
+# ---------------------------------------------------------------------------
+
 enable_bastion = true
 
-# MC instance. This is the management VM.
+# ---------------------------------------------------------------------------
+# MC / management instance
+# ---------------------------------------------------------------------------
+
 enable_mc_instance  = true
 mc_shape            = "VM.Standard3.Flex"
 mc_ocpus            = 3

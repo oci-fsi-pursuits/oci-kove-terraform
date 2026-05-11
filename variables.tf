@@ -29,8 +29,8 @@ variable "ssh_public_key" {
 
 variable "kove_namespace" {
   type        = string
-  description = "Short project prefix for names and tags."
-  default     = "kove"
+  description = "Optional project prefix override for names and tags. Empty uses defined_tag_namespace."
+  default     = ""
 }
 
 variable "kove_environment" {
@@ -89,8 +89,13 @@ variable "tags" {
 
 variable "defined_tag_namespace" {
   type        = string
-  description = "OCI defined tag namespace used for standard tags. The namespace and tag keys must already exist in OCI."
+  description = "OCI defined tag namespace used for standard tags and, by default, the display-name prefix namespace."
   default     = "kove"
+
+  validation {
+    condition     = length(trimspace(var.defined_tag_namespace)) > 0
+    error_message = "defined_tag_namespace must be non-empty."
+  }
 }
 
 variable "enable_defined_tags" {
@@ -354,6 +359,12 @@ variable "enable_compute_system" {
 }
 
 variable "compute_system_use_cluster_network_autoscaling" {
+  type        = bool
+  description = "Compatibility alias for compute_system_use_cluster_network. Prefer compute_system_use_cluster_network."
+  default     = false
+}
+
+variable "compute_system_use_cluster_network" {
   type        = bool
   description = "When true, deploy compute-system as a dedicated cluster network (instance-pool based) instead of a single BM instance."
   default     = false

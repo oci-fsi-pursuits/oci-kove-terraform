@@ -23,6 +23,8 @@ The default display-name prefix uses only `namespace` and `environment`. For exa
 
 Defined tags are emitted under `defined_tag_namespace` (default: `kove`). The OCI tag namespace and tag keys must already exist.
 
+In the root module, `defined_tag_namespace` is also used as the default naming namespace. That keeps operator-facing tfvars to one namespace value, while this module still supports separate `namespace` and `defined_tag_namespace` inputs for standalone use.
+
 ## OCI Defined Tag Prerequisite
 
 This module emits OCI `defined_tags`, not `freeform_tags`. OCI requires the tag namespace and every tag key to exist before Terraform creates tagged resources.
