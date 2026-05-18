@@ -22,7 +22,7 @@ EOT
 defined_tag_namespace = "kove"
 kove_environment      = "prod"
 
-# Set true after the OCI defined-tag namespace and keys are created.
+# Defined tags are off by default. Set true after the OCI defined-tag namespace and keys are created.
 enable_defined_tags = false
 
 tags = {

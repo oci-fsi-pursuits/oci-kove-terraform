@@ -68,7 +68,7 @@ variable "defined_tag_namespace" {
 variable "enable_defined_tags" {
   type        = bool
   description = "Apply OCI defined tags to bastion resources."
-  default     = true
+  default     = false
 }
 
 variable "shape" {

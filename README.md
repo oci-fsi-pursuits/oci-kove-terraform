@@ -91,12 +91,11 @@ RDMA memory nodes are named `kove-prod-xpd-1`, `kove-prod-xpd-2`, and so on. Com
 Resources use OCI defined tags, not freeform tags. Set `defined_tag_namespace` to the existing OCI tag namespace that contains the standard tag keys. That same value is also used as the default naming namespace, so operators only need to set it once:
 
 ```hcl
-enable_defined_tags   = true
+enable_defined_tags   = false
 defined_tag_namespace = "kove"
 ```
 
-The tag namespace and keys must exist in OCI before apply.
-Set `enable_defined_tags = false` to deploy before those tags exist, then switch it back to `true` after creating the namespace and keys.
+Defined tags are now disabled by default. Set `enable_defined_tags = true` after the OCI tag namespace and keys exist.
 
 ## RDMA Deployment Mode
 
@@ -139,12 +138,11 @@ Terraform applies standard defined tags to OCI resources. In OCI Console, go to 
 Your `.tfvars` should point Terraform at that namespace:
 
 ```hcl
-enable_defined_tags   = true
+enable_defined_tags   = false
 defined_tag_namespace = "kove"
 ```
 
-If the namespace or keys do not exist, OCI will reject the deployment with an `Invalid tags` error.
-For a temporary deployment before tags are ready, set `enable_defined_tags = false`.
+If the namespace or keys do not exist and `enable_defined_tags = true`, OCI will reject the deployment with an `Invalid tags` error.
 
 2. Download the required Kove documentation and software files from [download.kove.com/login](https://download.kove.com/login). Treat these as prerequisites for the deployment and MC completion workflow:
 
@@ -309,6 +307,7 @@ https://localhost:1443
 ```
 
 The `LocalForward 1443 ...` line is active only while connected with `ssh oci-bastion`. It is not activated when `oci-bastion` is used only as a `ProxyJump` for `ssh oci-kvm`.
+
 
 
 

@@ -58,5 +58,5 @@ variable "defined_tag_namespace" {
 variable "enable_defined_tags" {
   type        = bool
   description = "Emit defined tags. Set false when the OCI tag namespace or keys have not been created yet."
-  default     = true
+  default     = false
 }

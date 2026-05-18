@@ -48,11 +48,11 @@ Before running `terraform apply`, create or verify the tag namespace in OCI:
 Set the namespace in root `.tfvars`:
 
 ```hcl
-enable_defined_tags   = true
+enable_defined_tags   = false
 defined_tag_namespace = "kove"
 ```
 
-If the OCI namespace or keys are not ready yet, set `enable_defined_tags = false`. The module still produces the same display-name prefix, but emits an empty defined-tag map.
+Defined tags are disabled by default. Set `enable_defined_tags = true` after the OCI namespace and keys are ready. The module still produces the same display-name prefix even when emitting an empty defined-tag map.
 
 With the default namespace, the labels module emits tag keys like:
 
