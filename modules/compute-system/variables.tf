@@ -8,6 +8,12 @@ variable "subnet_id" {
   description = "Private subnet OCID for the compute-system primary VNIC."
 }
 
+variable "enable_ipv6" {
+  type        = bool
+  description = "Assign IPv6 address(es) on compute-system VNICs."
+  default     = true
+}
+
 variable "availability_domain" {
   type        = string
   description = "Availability domain for the compute-system BM."

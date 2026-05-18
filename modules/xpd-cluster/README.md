@@ -5,6 +5,8 @@ Creates the RDMA memory-node infrastructure only.
 Default memory-node display names use the role and index, for example `kove-prod-xpd-1`, `kove-prod-xpd-2`, and so on.
 Resources use OCI defined tags from `modules/labels`.
 
+IPv6 VNIC assignment is enabled by default via `enable_ipv6 = true` (set `enable_ipv6 = false` for IPv4-only assignment behavior).
+
 This module no longer creates a bastion, a management VM, or the single `compute-system` BM. Those are owned by sibling modules at the root:
 
 - `modules/mc-instance` for the MC/management instance

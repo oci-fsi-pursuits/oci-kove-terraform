@@ -30,6 +30,7 @@ module "rdma_platform" {
   availability_domain   = var.availability_domain
 
   use_existing_vcn = var.use_existing_vcn
+  enable_ipv6      = var.enable_ipv6
 
   existing_vcn_id            = var.use_existing_vcn ? var.existing_vcn_id : module.networking[0].vcn_id
   existing_public_subnet_id  = var.use_existing_vcn ? var.existing_public_subnet_id : module.networking[0].public_subnet_id
@@ -120,6 +121,7 @@ module "compute_system" {
   enable_defined_tags   = var.enable_defined_tags
   host_label_prefix     = var.host_label_prefix
   tags                  = var.tags
+  enable_ipv6           = var.enable_ipv6
 
   rdma_deployment_mode                                    = var.rdma_deployment_mode
   enable_cluster_network_autoscaling_mode                 = var.compute_system_use_cluster_network || var.compute_system_use_cluster_network_autoscaling

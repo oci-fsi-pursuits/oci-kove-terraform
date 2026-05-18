@@ -137,6 +137,7 @@ resource "oci_core_instance" "compute_system" {
   create_vnic_details {
     subnet_id        = var.subnet_id
     assign_public_ip = false
+    assign_ipv6ip    = var.enable_ipv6
     hostname_label   = local.hostname_label
   }
 
@@ -216,6 +217,7 @@ resource "oci_core_instance_configuration" "compute_system_cluster_network" {
       create_vnic_details {
         subnet_id        = var.subnet_id
         assign_public_ip = false
+        assign_ipv6ip    = var.enable_ipv6
       }
     }
   }

@@ -41,6 +41,10 @@ existing_vcn_id            = "ocid1.vcn.oc1.eu-frankfurt-1.REPLACE_ME"
 existing_public_subnet_id  = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 existing_private_subnet_id = "ocid1.subnet.oc1.eu-frankfurt-1.REPLACE_ME"
 
+# IPv6 is enabled by default for xpd and compute-system VNICs.
+# Set to false to deploy IPv4-only VNIC assignments.
+enable_ipv6 = true
+
 # ---------------------------------------------------------------------------
 # Images
 # ---------------------------------------------------------------------------

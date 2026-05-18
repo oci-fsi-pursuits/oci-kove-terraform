@@ -105,6 +105,12 @@ variable "existing_private_subnet_id" {
   description = "Private subnet OCID for RDMA memory nodes."
 }
 
+variable "enable_ipv6" {
+  type        = bool
+  description = "Assign IPv6 address(es) on RDMA memory-node VNICs."
+  default     = true
+}
+
 variable "public_route_table_id" {
   type        = string
   description = "Public route table OCID supplied by the root module."

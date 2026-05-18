@@ -10,3 +10,4 @@ Behavior:
 - The image is the same resolved BM image used by RDMA memory nodes: `bm_node_custom_image_ocid` when set, otherwise `rhel8_10_image_ocid`.
 - Display names use the shortened role `compute`, for example `kove-prod-compute-1`.
 - Resources use OCI defined tags from `modules/labels`.
+- IPv6 VNIC assignment is enabled by default via `enable_ipv6 = true` (set `enable_ipv6 = false` for IPv4-only assignment behavior).

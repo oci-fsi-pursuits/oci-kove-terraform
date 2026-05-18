@@ -187,6 +187,12 @@ variable "public_ingress_hpc_ui_ports" {
   default     = true
 }
 
+variable "enable_ipv6" {
+  type        = bool
+  description = "Enable IPv6 assignment on compute-system and xpd VNICs."
+  default     = true
+}
+
 # ---------------------------------------------------------------------------
 # Bastion
 # ---------------------------------------------------------------------------

@@ -94,6 +94,7 @@ resource "oci_core_instance" "bm_nodes" {
   create_vnic_details {
     subnet_id        = local.private_subnet_id
     assign_public_ip = false
+    assign_ipv6ip    = var.enable_ipv6
     hostname_label   = local.rdma_host_label_prefix != "" ? "${local.rdma_host_label_prefix}xpd${count.index + 1}" : "xpd${count.index + 1}"
   }
 
@@ -173,6 +174,7 @@ resource "oci_core_instance_configuration" "rdma_cluster_network" {
       create_vnic_details {
         subnet_id        = local.private_subnet_id
         assign_public_ip = false
+        assign_ipv6ip    = var.enable_ipv6
       }
     }
   }
